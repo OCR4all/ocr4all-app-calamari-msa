@@ -20,6 +20,25 @@ spring.profiles.active:
 server:
   port: 8080
 
+#
+# ocr4all configuration
+#
+ocr4all:
+  message:
+    end-point: /event
+    topic:
+      prefix: /topic
+      destination: /spi
+#
+# logging configuration: console / level info
+#
+logging:
+  file:
+    path:
+    name:
+  level:
+    root: INFO
+      
 ---
 spring:
     config.activate.on-profile: logging-file
