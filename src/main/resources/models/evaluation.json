@@ -1,6 +1,7 @@
 {
 	"booleans": [
 		{
+			"index": 3,
 			"argument": "--skip_empty_gt",
 			"label": "Skip empty ground truth data",
 			"default": true
@@ -8,12 +9,14 @@
 	],
 	"integers": [
 		{
+			"index": 1,
 			"argument": "--num_threads",
 			"label": "Number of parallel threads for program execution",
 			"default": 1,
 			"minimum": 1
 		},
 		{
+			"index": 2,
 			"argument": "--n_confusions",
 			"label": "Output this many top confusion",
 			"default": 10,
@@ -23,6 +26,7 @@
 	],
 	"selects": [
 		{
+			"index": 4,
 			"argument": "--non_existing_file_handling_mode",
 			"label": "Non existing file handling mode",
 			"multiple-options": false,
