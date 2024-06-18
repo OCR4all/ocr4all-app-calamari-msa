@@ -1,78 +1,126 @@
 {
 	"booleans": [
 		{
-			"index": 3,
-			"argument": "--verbose",
-			"label": "Print additional information",
-			"default": true
-		},
-		{
 			"index": 5,
-			"argument": "-estimate_skew",
+			"argument": "--codec.keep_loaded",
 			"label": "Estimate skew angle for every region without one",
-			"default": true
+			"default": false
 		},
 		{
-			"index": 6,
-			"argument": "--data.output_confidences",
-			"label": "Output confidences",
-			"default": true
+			"index": 9,
+			"argument": "--train.preload",
+			"label": "Load data on the fly instead of preloading it",
+			"description": "Reduces RAM usage, increases processing time",
+			"default": false
 		},
 		{
-			"index": 7,
-			"argument": "--data.output_glyphs",
-			"label": "Output words and glyphs",
-			"default": true
+			"index": 14,
+			"argument": "--data.skip_invalid",
+			"label": "Do no skip invalid gt, instead raise an exception",
+			"default": false
 		}
 	],
 	"integers": [
 		{
 			"index": 1,
-			"argument": "--pipeline.num_processes",
-			"label": "Number of parallel threads for program execution",
-			"default": 1,
+			"argument": "--n_folds",
+			"label": "The number of folds (= the number of models) to train",
+			"default": 5,
 			"minimum": 1
 		},
 		{
-			"index": 4,
-			"argument": "--pipeline.batch_size",
-			"label": "Number of lines to process in parallel (Batch size)",
-			"default": 1,
-			"step": 1,
-			"minimum": 1
+			"index": 2,
+			"argument": "--single_fold",
+			"label": "Only train a single fold (= a single model)"
+		},
+		{
+			"index": 3,
+			"argument": "--max_parallel_models",
+			"label": "Number of models to train in parallel"
+		},
+		{
+			"index": 5,
+			"argument": "--n_augmentations",
+			"label": "Data augmentation",
+			"description": "Number of data augmentations per line",
+			"default": 0,
+			"minimum": 0
+		},
+		{
+			"index": 6,
+			"argument": "--early_stopping.n_to_go",
+			"label": "Early stopping",
+			"description": "The number of models that must be worse than the current best model to stop",
+			"default": 10
+		},
+		{
+			"index": 7,
+			"argument": "--early_stopping.frequency",
+			"label": "Early stopping frequency",
+			"description": "Number of training steps between the evaluation of the current model"
 		},
 		{
 			"index": 8,
-			"argument": "--data.max_glyph_alternatives",
-			"label": "Maximum number of glyph alternatives to output",
-			"default": 1,
-			"step": 1,
+			"argument": "--trainer.epochs",
+			"label": "The number of iterations for training",
+			"description": "If using early stopping, this is the maximum number of iterations",
+			"default": 1000000,
 			"minimum": 1
 		},
 		{
 			"index": 10,
+			"argument": "--train.batch_size",
+			"label": "The batch size to use for training",
+			"default": 5,
+			"step": 1,
+			"minimum": 1
+		},
+		{
+			"index": 11,
+			"argument": "--data.line_height",
+			"label": "The line height",
+			"default": 48,
+			"minimum": 1
+		},
+		{
+			"index": 13,
+			"argument": "--trainer.random_seed",
+			"label": "Seed for random operations",
+			"description": "If zero a 'random' seed is used",
+			"default": 0,
+			"minimum": 0
+		},
+		{
+			"index": 17,
 			"argument": "--skewsteps",
 			"label": "Steps between 0 and +/-maxskew to estimate the possible skew of a region",
 			"default": 8,
-			"step": 1,
-			"minimum": 1
+			"step": 1
 		}
 	],
 	"decimals": [
 		{
-			"index": 9,
+			"index": 16,
 			"argument": "--maxskew",
 			"label": "Maximum estimated skew of a region",
 			"default": 2.0,
-			"step": 0.001,
-			"minimum": 1.0
+			"step": 0.001
 		}
 	],
 	"strings": [
 		{
-			"index": 2,
-			"argument": "--checkpoin",
-			"label": "Line recognition models"
+			"index": 4,
+			"argument": "--codec.include_files",
+			"label": "Whitelist of characters",
+			"description": "Will be kept even if they do not occur in the GT, e.g. ABCDEFGHIJ...012345",
+			"default": "A-Za-z0-9"
+		},
+		{
+			"index": 12,
+			"argument": "--network",
+			"label": "The network structure",
+			"description": "deep3: cnn=40:3x3,pool=2x2,cnn=60:3x3,pool=2x2,cnn=120:3x3,lstm=200,lstm=200,lstm=200,dropout=0.5",
+			"default": "cnn=40:3x3,pool=2x2,cnn=60:3x3,pool=2x2,lstm=200,dropout=0.5"
 		}
 	]
 }

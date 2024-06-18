@@ -29,6 +29,22 @@ ocr4all:
     topic:
       prefix: /topic
       destination: /spi
+  thread.pool.size: 
+    standard: 6
+    time-consuming: 3
+  data.folder: ${user.home}/ocr4all/data
+  assemble.folder: ${user.home}/ocr4all/assemble
+  projects.folder: ${user.home}/ocr4all/workspace/projects
+  calamari:
+    logging.discard:
+      output: false
+      error: false
+    processors:
+      evaluation: calamari-eval
+      recognition: calamari-predict
+      training: calamari-training
+      time-consuming: training,recognition
+  
 #
 # logging configuration: console / level info
 #
@@ -59,9 +75,21 @@ logging.level:
 
 ---
 spring:
+    config.activate.on-profile: calamari-logging-discard
+
+
+ocr4all.calamari.logging.discard:
+  output: true
+  error: true
+
+---
+spring:
     config.activate.on-profile: docker
 
-ocr4all.projects.folder: /srv/ocr4all/projects
+ocr4all:
+  data.folder: /srv/ocr4all/data
+  assemble.folder: /srv/ocr4all/assemble
+  projects.folder: /srv/ocr4all/projects
 
 ---
 spring:
@@ -70,4 +98,7 @@ spring:
 server:
   port: 9092
 
-ocr4all.projects.folder: ${user.home}/ocr4all/dev/workspace/projects
+ocr4all:
+  data.folder: ${user.home}/ocr4all/dev/data
+  assemble.folder: ${user.home}/ocr4all/dev/assemble
+  projects.folder: ${user.home}/ocr4all/dev/workspace/projects

@@ -1,0 +1,11 @@
+{
+	"mappings": [
+		{
+			"argument": "--verbose",
+			"values": [
+				"--verbose",
+				"True"
+			]
+		}
+	]
+}

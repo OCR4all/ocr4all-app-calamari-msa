@@ -42,9 +42,14 @@ public class Ocr4allAppCalamariMsaApplication {
 
 		ConfigurationService configurationService = context.getBean(ConfigurationService.class);
 
-		logger.info("started ocr4all-app-ocrd-msa: port " + configurationService.getServerPort() + ", active profiles '"
-				+ configurationService.getActiveProfilesCSV() + "', projects folder '"
-				+ context.getEnvironment().getProperty("ocr4all.projects.folder") + "'.");
+		logger.info("started ocr4all-app-calamari-msa: port " + configurationService.getServerPort()
+				+ ", active profiles '" + configurationService.getActiveProfilesCSV() + "', folders [data '"
+				+ context.getEnvironment().getProperty("ocr4all.data.folder") + "', assemble '"
+				+ context.getEnvironment().getProperty("ocr4all.assemble.folder") + "', projects '"
+				+ context.getEnvironment().getProperty("ocr4all.projects.folder") + "'], processors [evaluation '"
+				+ context.getEnvironment().getProperty("ocr4all.calamari.processors.evaluation") + "', recognition '"
+				+ context.getEnvironment().getProperty("ocr4all.calamari.processors.recognition") + "', training '"
+				+ context.getEnvironment().getProperty("ocr4all.calamari.processors.training") + "'].");
 	}
 
 }
