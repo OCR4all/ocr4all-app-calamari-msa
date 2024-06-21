@@ -1,0 +1,25 @@
+{
+	"mappings": [
+		{
+			"argument": "--codec.keep_loaded",
+			"values": [
+				"--codec.keep_loaded",
+				"True"
+			]
+		},
+		{
+			"argument": "--train.preload",
+			"values": [
+				"--train.preload",
+				"True"
+			]
+		},
+		{
+			"argument": "--data.skip_invalid",
+			"values": [
+				"--data.skip_invalid",
+				"False"
+			]
+		}
+	]
+}

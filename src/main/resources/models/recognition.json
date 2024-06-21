@@ -1,0 +1,76 @@
+{
+	"booleans": [
+		{
+			"index": 3,
+			"argument": "--verbose",
+			"label": "Print additional information",
+			"default": true
+		},
+		{
+			"index": 5,
+			"argument": "--estimate_skew",
+			"label": "Estimate skew angle for every region without one",
+			"default": true
+		},
+		{
+			"index": 6,
+			"argument": "--data.output_confidences",
+			"label": "Output confidences",
+			"default": true
+		},
+		{
+			"index": 7,
+			"argument": "--data.output_glyphs",
+			"label": "Output words and glyphs",
+			"default": true
+		}
+	],
+	"integers": [
+		{
+			"index": 1,
+			"argument": "--pipeline.num_processes",
+			"label": "Number of parallel threads for program execution",
+			"default": 1,
+			"minimum": 1
+		},
+		{
+			"index": 4,
+			"argument": "--pipeline.batch_size",
+			"label": "Number of lines to process in parallel (Batch size)",
+			"default": 1,
+			"step": 1,
+			"minimum": 1
+		},
+		{
+			"index": 8,
+			"argument": "--data.max_glyph_alternatives",
+			"label": "Maximum number of glyph alternatives to output",
+			"default": 1,
+			"step": 1,
+			"minimum": 1
+		},
+		{
+			"index": 10,
+			"argument": "--skewsteps",
+			"label": "Steps between 0 and +/-maxskew to estimate the possible skew of a region",
+			"default": 8,
+			"step": 1
+		}
+	],
+	"decimals": [
+		{
+			"index": 9,
+			"argument": "--maxskew",
+			"label": "Maximum estimated skew of a region",
+			"default": 2.0,
+			"step": 0.001
+		}
+	],
+	"strings": [
+		{
+			"index": 2,
+			"argument": "--checkpoin",
+			"label": "Line recognition models"
+		}
+	]
+}
