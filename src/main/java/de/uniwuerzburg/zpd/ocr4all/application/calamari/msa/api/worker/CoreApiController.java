@@ -31,9 +31,9 @@ public class CoreApiController {
 	public static final String applicationJson = "application/json";
 
 	/**
-	 * The model request mapping.
+	 * The description request mapping.
 	 */
-	public static final String modelRequestMapping = "/model";
+	public static final String descriptionRequestMapping = "/description";
 
 	/**
 	 * The execute request mapping.

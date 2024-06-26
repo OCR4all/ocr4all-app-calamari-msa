@@ -1,55 +1,64 @@
 {
-	"booleans": [
-		{
-			"index": 3,
-			"argument": "--skip_empty_gt",
-			"label": "Skip empty ground truth data",
-			"default": true
-		}
+	"description": "Evaluates recognitions with Calamari",
+	"categories": [
+		"Recognition evaluation"
 	],
-	"integers": [
-		{
-			"index": 1,
-			"argument": "--num_threads",
-			"label": "Number of parallel threads for program execution",
-			"default": 1,
-			"minimum": 1
-		},
-		{
-			"index": 2,
-			"argument": "--n_confusions",
-			"label": "Output this many top confusion",
-			"default": 10,
-			"step": 1,
-			"minimum": 1
-		}
+	"steps": [
+		"evaluation/recognition"
 	],
-	"selects": [
-		{
-			"index": 4,
-			"argument": "--non_existing_file_handling_mode",
-			"label": "Non existing file handling mode",
-			"multiple-options": false,
-			"items": [
-				{
-					"value": "skip",
-					"description": "Skip files",
-					"selected": false,
-					"disabled": false
-				},
-				{
-					"value": "empty",
-					"description": "Treat as empty files",
-					"selected": false,
-					"disabled": false
-				},
-				{
-					"value": "error",
-					"description": "Throw an error",
-					"selected": false,
-					"disabled": false
-				}
-			]
-		}
-	]
+	"model": {
+		"booleans": [
+			{
+				"index": 3,
+				"argument": "--skip_empty_gt",
+				"label": "Skip empty ground truth data",
+				"default": true
+			}
+		],
+		"integers": [
+			{
+				"index": 1,
+				"argument": "--num_threads",
+				"label": "Number of parallel threads for program execution",
+				"default": 1,
+				"minimum": 1
+			},
+			{
+				"index": 2,
+				"argument": "--n_confusions",
+				"label": "Output this many top confusion",
+				"default": 10,
+				"step": 1,
+				"minimum": 1
+			}
+		],
+		"selects": [
+			{
+				"index": 4,
+				"argument": "--non_existing_file_handling_mode",
+				"label": "Non existing file handling mode",
+				"multiple-options": false,
+				"items": [
+					{
+						"value": "skip",
+						"description": "Skip files",
+						"selected": false,
+						"disabled": false
+					},
+					{
+						"value": "empty",
+						"description": "Treat as empty files",
+						"selected": false,
+						"disabled": false
+					},
+					{
+						"value": "error",
+						"description": "Throw an error",
+						"selected": false,
+						"disabled": false
+					}
+				]
+			}
+		]
+	}
 }

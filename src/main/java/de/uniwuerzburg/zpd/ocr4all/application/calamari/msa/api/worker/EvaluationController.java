@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.DescriptionResponse;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.EvaluationRequest;
-import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.model.Model;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ProcessorService;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ResourceService;
 import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.api.domain.JobResponse;
@@ -65,19 +65,19 @@ public class EvaluationController extends CoreApiController {
 	}
 
 	/**
-	 * Returns the model in the response body.
+	 * Returns the description in the response body.
 	 * 
-	 * @return The model in the response body.
+	 * @return The description in the response body.
 	 * @since 1.8
 	 */
-	@GetMapping(modelRequestMapping)
-	public ResponseEntity<Model> model() {
-		Model model = resourceService.getEvaluationModel();
+	@GetMapping(descriptionRequestMapping)
+	public ResponseEntity<DescriptionResponse> description() {
+		DescriptionResponse description = resourceService.getEvaluation();
 
-		if (model == null)
+		if (description == null)
 			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 		else
-			return ResponseEntity.ok().body(model);
+			return ResponseEntity.ok().body(description);
 	}
 
 	/**
@@ -90,8 +90,7 @@ public class EvaluationController extends CoreApiController {
 	@PostMapping(executeRequestMapping)
 	public ResponseEntity<JobResponse> execute(@RequestBody @Valid EvaluationRequest request) {
 		try {
-			logger.debug("execute process: key " + request.getKey() + ", arguments '"
-					+ request.getArguments() + "'.");
+			logger.debug("execute process: key " + request.getKey() + ", arguments '" + request.getArguments() + "'.");
 
 			final SystemProcessJob job = service.startEvaluation(request.getKey(),
 					resourceService.mapEvaluationArguments(request.getArguments()), request.getCollection());

@@ -19,7 +19,7 @@ import org.springframework.web.context.annotation.ApplicationScope;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.model.Model;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.DescriptionResponse;
 
 /**
  * Defines resource services.
@@ -37,19 +37,19 @@ public class ResourceService {
 	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ResourceService.class);
 
 	/**
-	 * Defines model types.
+	 * Defines description types.
 	 *
 	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
 	 * @version 1.0
 	 * @since 17
 	 */
-	private enum ModelType {
+	private enum DescriptionType {
 		evaluation, recognition, training;
 
 		/**
 		 * The folder.
 		 */
-		private static final String folder = "models/";
+		private static final String folder = "descriptions/";
 
 		/**
 		 * The suffix.
@@ -84,51 +84,9 @@ public class ResourceService {
 	}
 
 	/**
-	 * Defines argument mapping types.
-	 *
-	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
-	 * @version 1.0
-	 * @since 17
-	 */
-	private enum ArgumentMappingType {
-		evaluation, recognition, training;
-
-		/**
-		 * The folder.
-		 */
-		private static final String folder = ModelType.folder;
-
-		/**
-		 * The suffix.
-		 */
-		private static final String suffix = "-mapping" + ModelType.suffix;
-
-		/**
-		 * Returns the resource name.
-		 * 
-		 * @return The resource name.
-		 * @since 1.8
-		 */
-		public String getResourceName() {
-			return folder + this.name() + suffix;
-		}
-
-		/**
-		 * Returns an input stream for reading the resource.
-		 * 
-		 * @return An input stream for reading the resource. Null if the resource could
-		 *         not be found.
-		 * @since 17
-		 */
-		public InputStream getResourceAsStream() {
-			return ResourceService.getResourceAsStream(getResourceName());
-		}
-	}
-
-	/**
 	 * The evaluation model.
 	 */
-	private final Model evaluation;
+	private final Description evaluation;
 
 	/**
 	 * The evaluation argument mappings.
@@ -138,7 +96,7 @@ public class ResourceService {
 	/**
 	 * The recognition model.
 	 */
-	private final Model recognition;
+	private final Description recognition;
 
 	/**
 	 * The recognition model mappings.
@@ -148,7 +106,7 @@ public class ResourceService {
 	/**
 	 * The training model.
 	 */
-	private final Model training;
+	private final Description training;
 
 	/**
 	 * The training model mappings.
@@ -167,27 +125,27 @@ public class ResourceService {
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
 		// Load the models
-		evaluation = load(objectMapper, ModelType.evaluation);
-		recognition = load(objectMapper, ModelType.recognition);
-		training = load(objectMapper, ModelType.training);
+		evaluation = load(objectMapper, DescriptionType.evaluation);
+		recognition = load(objectMapper, DescriptionType.recognition);
+		training = load(objectMapper, DescriptionType.training);
 
 		// Load the argument mappings
-		evaluationMappings = load(objectMapper, ArgumentMappingType.evaluation);
-		recognitionMappings = load(objectMapper, ArgumentMappingType.recognition);
-		trainingMappings = load(objectMapper, ArgumentMappingType.training);
+		evaluationMappings = getMappings(evaluation, DescriptionType.evaluation);
+		recognitionMappings = getMappings(recognition, DescriptionType.recognition);
+		trainingMappings = getMappings(training, DescriptionType.training);
 	}
 
 	/**
-	 * Loads the model.
+	 * Loads the description.
 	 * 
 	 * @param objectMapper The JSON object mapper.
-	 * @param type         The model type.
+	 * @param type         The description type.
 	 * @return The model. Null on troubles.
 	 * @since 17
 	 */
-	private static Model load(ObjectMapper objectMapper, ModelType type) {
+	private static Description load(ObjectMapper objectMapper, DescriptionType type) {
 		try {
-			return objectMapper.readValue(type.getResourceAsStream(), Model.class);
+			return objectMapper.readValue(type.getResourceAsStream(), Description.class);
 		} catch (Exception e) {
 			logger.error("can not load resource " + type.getResourceName() + " - " + e.getMessage());
 
@@ -197,40 +155,34 @@ public class ResourceService {
 	}
 
 	/**
-	 * Loads the model mapping.
+	 * Returns the model mappings.
 	 * 
-	 * @param objectMapper The JSON object mapper.
-	 * @param type         The model mapping type.
-	 * @return The model. Null if not available.
+	 * @param description The description.
+	 * @param type        The description type.
+	 * @return The model mappings.
 	 * @since 17
 	 */
-	private static Hashtable<String, List<String>> load(ObjectMapper objectMapper, ArgumentMappingType type) {
+	private static Hashtable<String, List<String>> getMappings(Description description, DescriptionType type) {
 		Hashtable<String, List<String>> mapping = new Hashtable<>();
 
-		InputStream inputStream = type.getResourceAsStream();
-		if (inputStream != null)
-			try {
-				ModelMapping model = objectMapper.readValue(type.getResourceAsStream(), ModelMapping.class);
+		if (description != null && description.getMappings() != null) {
+			for (Description.Mapping map : description.getMappings())
+				if (map.getArgument() != null) {
+					if (mapping.containsKey(map.getArgument()))
+						logger.warn("ambiguous argument '" + map.getArgument() + "' on resource "
+								+ type.getResourceName() + ".");
+					else {
+						List<String> values = new ArrayList<>();
+						if (map.getValues() != null)
+							for (String value : map.getValues())
+								if (value != null)
+									values.add(value);
 
-				for (ModelMapping.Mapping map : model.getMappings())
-					if (map.getArgument() != null) {
-						if (mapping.containsKey(map.getArgument()))
-							logger.warn("ambiguous argument '" + map.getArgument() + "' on resource "
-									+ type.getResourceName() + ".");
-						else {
-							List<String> values = new ArrayList<>();
-							if (map.getValues() != null)
-								for (String value : map.getValues())
-									if (value != null)
-										values.add(value);
-
-							mapping.put(map.getArgument(), values);
-						}
+						mapping.put(map.getArgument(), values);
 					}
+				}
 
-			} catch (Exception e) {
-				logger.error("can not load resource " + type.getResourceName() + " - " + e.getMessage());
-			}
+		}
 
 		return mapping;
 	}
@@ -245,16 +197,6 @@ public class ResourceService {
 	 */
 	private static InputStream getResourceAsStream(String name) {
 		return ResourceService.class.getClassLoader().getResourceAsStream(name);
-	}
-
-	/**
-	 * Returns the evaluation model.
-	 *
-	 * @return The evaluation model. Null if not available.
-	 * @since 17
-	 */
-	public Model getEvaluationModel() {
-		return evaluation;
 	}
 
 	/**
@@ -281,6 +223,16 @@ public class ResourceService {
 	}
 
 	/**
+	 * Returns the evaluation description.
+	 *
+	 * @return The evaluation description. Null if not available.
+	 * @since 17
+	 */
+	public DescriptionResponse getEvaluation() {
+		return evaluation.ignoreSuperclass();
+	}
+
+	/**
 	 * Maps the evaluation arguments.
 	 *
 	 * @param arguments The arguments to map.
@@ -292,13 +244,13 @@ public class ResourceService {
 	}
 
 	/**
-	 * Returns the recognition model.
+	 * Returns the recognition description.
 	 *
-	 * @return The recognition model. Null if not available.
+	 * @return The recognition description. Null if not available.
 	 * @since 17
 	 */
-	public Model getRecognitionModel() {
-		return recognition;
+	public DescriptionResponse getRecognition() {
+		return recognition.ignoreSuperclass();
 	}
 
 	/**
@@ -313,13 +265,13 @@ public class ResourceService {
 	}
 
 	/**
-	 * Returns the training model.
+	 * Returns the training description.
 	 *
-	 * @return The training model. Null if not available.
+	 * @return The training description. Null if not available.
 	 * @since 17
 	 */
-	public Model getTrainingModel() {
-		return training;
+	public DescriptionResponse getTraining() {
+		return training.ignoreSuperclass();
 	}
 
 	/**
@@ -334,27 +286,27 @@ public class ResourceService {
 	}
 
 	/**
-	 * Defines model mappings.
+	 * Defines descriptions.
 	 *
 	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
 	 * @version 1.0
 	 * @since 17
 	 */
-	public static class ModelMapping implements Serializable {
+	public static class Description extends DescriptionResponse {
 		/**
 		 * The serial version UID.
 		 */
 		private static final long serialVersionUID = 1L;
 
 		/**
-		 * The mappings.
+		 * The model mappings.
 		 */
 		private List<Mapping> mappings;
 
 		/**
-		 * Returns the mappings.
+		 * Returns the model mappings.
 		 *
-		 * @return The mappings.
+		 * @return The model mappings.
 		 * @since 17
 		 */
 		public List<Mapping> getMappings() {
@@ -362,9 +314,9 @@ public class ResourceService {
 		}
 
 		/**
-		 * Set the mappings.
+		 * Set the model mappings.
 		 *
-		 * @param mappings The mappings to set.
+		 * @param mappings The model mappings to set.
 		 * @since 17
 		 */
 		public void setMappings(List<Mapping> mappings) {
