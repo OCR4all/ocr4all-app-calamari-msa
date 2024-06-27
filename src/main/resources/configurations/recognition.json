@@ -90,5 +90,9 @@
 				"True"
 			]
 		}
-	]
+	],
+	"dataset-arguments": {
+		"xml-file": "--xml-datase",
+		"image-file": "--image-datase"
+	}
 }

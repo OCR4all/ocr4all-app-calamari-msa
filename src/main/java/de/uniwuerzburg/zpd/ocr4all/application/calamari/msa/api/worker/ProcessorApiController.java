@@ -47,14 +47,14 @@ public class ProcessorApiController extends CoreApiController {
 	/**
 	 * Returns the description response for the api.
 	 * 
-	 * @param identifier  The identifier.
-	 * @param description The description.
+	 * @param identifier    The identifier.
+	 * @param configuration The processor configuration.
 	 * @return The description response for the api.
 	 * @since 17
 	 */
-	protected DescriptionResponse getDescription(String identifier, ResourceService.Description description) {
-		return new DescriptionResponse(identifier, description.getDescription(), description.getCategories(),
-				description.getSteps(), description.getModel());
+	protected DescriptionResponse getDescription(String identifier, ResourceService.Configuration configuration) {
+		return new DescriptionResponse(identifier, configuration.getDescription(), configuration.getCategories(),
+				configuration.getSteps(), configuration.getModel());
 	}
 
 }

@@ -16,6 +16,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.ApplicationScope;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -39,19 +40,19 @@ public class ResourceService {
 	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ResourceService.class);
 
 	/**
-	 * Defines description types.
+	 * Defines configuration types.
 	 *
 	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
 	 * @version 1.0
 	 * @since 17
 	 */
-	private enum DescriptionType {
+	private enum Type {
 		evaluation, recognition, training;
 
 		/**
 		 * The folder.
 		 */
-		private static final String folder = "descriptions/";
+		private static final String folder = "configurations/";
 
 		/**
 		 * The suffix.
@@ -86,34 +87,24 @@ public class ResourceService {
 	}
 
 	/**
-	 * The evaluation model.
+	 * The evaluation configuration.
 	 */
-	private final Description evaluation;
+	private final Evaluation evaluation;
 
 	/**
-	 * The evaluation argument mappings.
+	 * The recognition configuration.
 	 */
-	private final Hashtable<String, List<String>> evaluationMappings;
+	private final Recognition recognition;
 
 	/**
-	 * The recognition model.
+	 * The training configuration.
 	 */
-	private final Description recognition;
+	private final Training training;
 
 	/**
-	 * The recognition model mappings.
+	 * The model mappings.
 	 */
-	private final Hashtable<String, List<String>> recognitionMappings;
-
-	/**
-	 * The training model.
-	 */
-	private final Description training;
-
-	/**
-	 * The training model mappings.
-	 */
-	private final Hashtable<String, List<String>> trainingMappings;
+	private final Hashtable<Type, Hashtable<String, List<String>>> mappings = new Hashtable<>();
 
 	/**
 	 * Creates a resource service.
@@ -127,33 +118,33 @@ public class ResourceService {
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
 		// Load the models
-		evaluation = load(objectMapper, DescriptionType.evaluation);
-		recognition = load(objectMapper, DescriptionType.recognition);
-		training = load(objectMapper, DescriptionType.training);
+		evaluation = load(Evaluation.class, objectMapper, Type.evaluation);
+		recognition = load(Recognition.class, objectMapper, Type.recognition);
+		training = load(Training.class, objectMapper, Type.training);
 
 		// Load the argument mappings
-		evaluationMappings = getMappings(evaluation, DescriptionType.evaluation);
-		recognitionMappings = getMappings(recognition, DescriptionType.recognition);
-		trainingMappings = getMappings(training, DescriptionType.training);
+		mappings.put(Type.evaluation, getMappings(evaluation, Type.evaluation));
+		mappings.put(Type.recognition, getMappings(recognition, Type.recognition));
+		mappings.put(Type.training, getMappings(training, Type.training));
 	}
 
 	/**
-	 * Loads the description.
+	 * Loads the configuration.
 	 * 
+	 * @param clazz        The configuration class type.
 	 * @param objectMapper The JSON object mapper.
-	 * @param type         The description type.
+	 * @param type         The configuration type.
 	 * @return The model. Null on troubles.
 	 * @since 17
 	 */
-	private static Description load(ObjectMapper objectMapper, DescriptionType type) {
+	private static <T extends Configuration> T load(Class<T> clazz, ObjectMapper objectMapper, Type type) {
 		try {
-			return objectMapper.readValue(type.getResourceAsStream(), Description.class);
+			return objectMapper.readValue(type.getResourceAsStream(), clazz);
 		} catch (Exception e) {
-			logger.error("can not load resource " + type.getResourceName() + " - " + e.getMessage());
+			logger.error("can not load resource " + clazz.getName().toLowerCase() + " - " + e.getMessage());
 
 			return null;
 		}
-
 	}
 
 	/**
@@ -164,11 +155,11 @@ public class ResourceService {
 	 * @return The model mappings.
 	 * @since 17
 	 */
-	private static Hashtable<String, List<String>> getMappings(Description description, DescriptionType type) {
+	private static Hashtable<String, List<String>> getMappings(Configuration description, Type type) {
 		Hashtable<String, List<String>> mapping = new Hashtable<>();
 
 		if (description != null && description.getMappings() != null) {
-			for (Description.Mapping map : description.getMappings())
+			for (Configuration.Mapping map : description.getMappings())
 				if (map.getArgument() != null) {
 					if (mapping.containsKey(map.getArgument()))
 						logger.warn("ambiguous argument '" + map.getArgument() + "' on resource "
@@ -230,7 +221,7 @@ public class ResourceService {
 	 * @return The evaluation description. Null if not available.
 	 * @since 17
 	 */
-	public Description getEvaluation() {
+	public Configuration getEvaluation() {
 		return evaluation;
 	}
 
@@ -242,7 +233,7 @@ public class ResourceService {
 	 * @since 17
 	 */
 	public List<String> mapEvaluationArguments(List<String> arguments) {
-		return mapArguments(evaluationMappings, arguments);
+		return mapArguments(mappings.get(Type.evaluation), arguments);
 	}
 
 	/**
@@ -251,7 +242,7 @@ public class ResourceService {
 	 * @return The recognition description. Null if not available.
 	 * @since 17
 	 */
-	public Description getRecognition() {
+	public Configuration getRecognition() {
 		return recognition;
 	}
 
@@ -263,7 +254,7 @@ public class ResourceService {
 	 * @since 17
 	 */
 	public List<String> mapRecognitionArguments(List<String> arguments) {
-		return mapArguments(recognitionMappings, arguments);
+		return mapArguments(mappings.get(Type.recognition), arguments);
 	}
 
 	/**
@@ -272,7 +263,7 @@ public class ResourceService {
 	 * @return The training description. Null if not available.
 	 * @since 17
 	 */
-	public Description getTraining() {
+	public Configuration getTraining() {
 		return training;
 	}
 
@@ -284,17 +275,17 @@ public class ResourceService {
 	 * @since 17
 	 */
 	public List<String> mapTrainingArguments(List<String> arguments) {
-		return mapArguments(trainingMappings, arguments);
+		return mapArguments(mappings.get(Type.training), arguments);
 	}
 
 	/**
-	 * Defines descriptions.
+	 * Defines configurations.
 	 *
 	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
 	 * @version 1.0
 	 * @since 17
 	 */
-	public static class Description {
+	public static class Configuration {
 		/**
 		 * The service provider description.
 		 */
@@ -486,6 +477,127 @@ public class ResourceService {
 			}
 
 		}
+	}
+
+	/**
+	 * Defines evaluations.
+	 *
+	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
+	 * @version 1.0
+	 * @since 17
+	 */
+	public static class Evaluation extends Configuration {
+	}
+
+	/**
+	 * Defines recognitions.
+	 *
+	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
+	 * @version 1.0
+	 * @since 17
+	 */
+	public static class Recognition extends Configuration {
+		/**
+		 * The dataset arguments.
+		 */
+		@NotBlank
+		@JsonProperty("dataset-arguments")
+		private DatasetArguments datasetArguments;
+
+		/**
+		 * Returns the dataset arguments.
+		 *
+		 * @return The dataset arguments.
+		 * @since 17
+		 */
+		public DatasetArguments getDatasetArguments() {
+			return datasetArguments;
+		}
+
+		/**
+		 * Set the dataset arguments.
+		 *
+		 * @param datasetArguments The dataset arguments to set.
+		 * @since 17
+		 */
+		public void setDatasetArguments(DatasetArguments datasetArguments) {
+			this.datasetArguments = datasetArguments;
+		}
+
+		/**
+		 * Defines dataset arguments.
+		 *
+		 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
+		 * @version 1.0
+		 * @since 17
+		 */
+		public static class DatasetArguments extends Configuration {
+			/**
+			 * The xml file name.
+			 */
+			@NotBlank
+			@JsonProperty("xml-file")
+			private String xmlFile;
+
+			/**
+			 * The image file name.
+			 */
+			@NotBlank
+			@JsonProperty("image-file")
+			private String imageFile;
+
+			/**
+			 * Returns the xml file name.
+			 *
+			 * @return The xml file name.
+			 * @since 17
+			 */
+			public String getXmlFile() {
+				return xmlFile;
+			}
+
+			/**
+			 * Set the xml file name.
+			 *
+			 * @param xmlFile The xml file name to set.
+			 * @since 17
+			 */
+			public void setXmlFile(String xmlFile) {
+				this.xmlFile = xmlFile;
+			}
+
+			/**
+			 * Returns the image file name.
+			 *
+			 * @return The image file name.
+			 * @since 17
+			 */
+			public String getImageFile() {
+				return imageFile;
+			}
+
+			/**
+			 * Set the image file name.
+			 *
+			 * @param imageFile The image file name to set.
+			 * @since 17
+			 */
+			public void setImageFile(String imageFile) {
+				this.imageFile = imageFile;
+			}
+
+		}
+
+	}
+
+	/**
+	 * Defines trainings.
+	 *
+	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
+	 * @version 1.0
+	 * @since 17
+	 */
+	public static class Training extends Configuration {
 	}
 
 }

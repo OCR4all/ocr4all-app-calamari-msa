@@ -59,13 +59,13 @@ public class RecognitionController extends ProcessorApiController {
 	 */
 	@GetMapping(descriptionRequestMapping)
 	public ResponseEntity<DescriptionResponse> description() {
-		ResourceService.Description description = resourceService.getRecognition();
+		ResourceService.Configuration configuration = resourceService.getRecognition();
 
-		if (description == null)
+		if (configuration == null)
 			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 		else
 			return ResponseEntity.ok()
-					.body(getDescription(service.getProcessor(ProcessorService.Type.evaluation), description));
+					.body(getDescription(service.getProcessor(ProcessorService.Type.evaluation), configuration));
 	}
 
 	/**
