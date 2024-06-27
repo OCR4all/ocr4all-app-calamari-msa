@@ -34,21 +34,11 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping(path = EvaluationController.contextPath, produces = CoreApiController.applicationJson)
-public class EvaluationController extends CoreApiController {
+public class EvaluationController extends ProcessorApiController {
 	/**
 	 * The context path.
 	 */
 	public static final String contextPath = apiContextPathVersion_1_0 + "/evaluation";
-
-	/**
-	 * The processor service.
-	 */
-	private final ProcessorService service;
-
-	/**
-	 * The resource service.
-	 */
-	private final ResourceService resourceService;
 
 	/**
 	 * Creates an evaluation controller for the api.
@@ -58,10 +48,7 @@ public class EvaluationController extends CoreApiController {
 	 * @since 17
 	 */
 	public EvaluationController(ProcessorService service, ResourceService resourceService) {
-		super(EvaluationController.class);
-
-		this.service = service;
-		this.resourceService = resourceService;
+		super(EvaluationController.class, service, resourceService);
 	}
 
 	/**
@@ -72,12 +59,13 @@ public class EvaluationController extends CoreApiController {
 	 */
 	@GetMapping(descriptionRequestMapping)
 	public ResponseEntity<DescriptionResponse> description() {
-		DescriptionResponse description = resourceService.getEvaluation();
+		ResourceService.Description description = resourceService.getEvaluation();
 
 		if (description == null)
 			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 		else
-			return ResponseEntity.ok().body(description);
+			return ResponseEntity.ok()
+					.body(getDescription(service.getProcessor(ProcessorService.Type.evaluation), description));
 	}
 
 	/**

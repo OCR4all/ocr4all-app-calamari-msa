@@ -19,7 +19,9 @@ import org.springframework.web.context.annotation.ApplicationScope;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.DescriptionResponse;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.model.Model;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Defines resource services.
@@ -228,8 +230,8 @@ public class ResourceService {
 	 * @return The evaluation description. Null if not available.
 	 * @since 17
 	 */
-	public DescriptionResponse getEvaluation() {
-		return evaluation.ignoreSuperclass();
+	public Description getEvaluation() {
+		return evaluation;
 	}
 
 	/**
@@ -249,8 +251,8 @@ public class ResourceService {
 	 * @return The recognition description. Null if not available.
 	 * @since 17
 	 */
-	public DescriptionResponse getRecognition() {
-		return recognition.ignoreSuperclass();
+	public Description getRecognition() {
+		return recognition;
 	}
 
 	/**
@@ -270,8 +272,8 @@ public class ResourceService {
 	 * @return The training description. Null if not available.
 	 * @since 17
 	 */
-	public DescriptionResponse getTraining() {
-		return training.ignoreSuperclass();
+	public Description getTraining() {
+		return training;
 	}
 
 	/**
@@ -292,16 +294,113 @@ public class ResourceService {
 	 * @version 1.0
 	 * @since 17
 	 */
-	public static class Description extends DescriptionResponse {
+	public static class Description {
 		/**
-		 * The serial version UID.
+		 * The service provider description.
 		 */
-		private static final long serialVersionUID = 1L;
+		@NotBlank
+		private String description;
+
+		/**
+		 * The service provider categories.
+		 */
+		private List<String> categories = new ArrayList<>();
+
+		/**
+		 * The service provider steps.
+		 */
+		private List<String> steps = new ArrayList<>();
+
+		/**
+		 * The model.
+		 */
+		@NotNull
+		private Model model;
 
 		/**
 		 * The model mappings.
 		 */
 		private List<Mapping> mappings;
+
+		/**
+		 * Returns the description.
+		 *
+		 * @return The description.
+		 * @since 17
+		 */
+		public String getDescription() {
+			return description;
+		}
+
+		/**
+		 * Set the description.
+		 *
+		 * @param description The description to set.
+		 * @since 17
+		 */
+		public void setDescription(String description) {
+			this.description = description;
+		}
+
+		/**
+		 * Returns the categories.
+		 *
+		 * @return The categories.
+		 * @since 17
+		 */
+		public List<String> getCategories() {
+			return categories;
+		}
+
+		/**
+		 * Set the categories.
+		 *
+		 * @param categories The categories to set.
+		 * @since 17
+		 */
+		public void setCategories(List<String> categories) {
+			this.categories = categories;
+		}
+
+		/**
+		 * Returns the steps.
+		 *
+		 * @return The steps.
+		 * @since 17
+		 */
+		public List<String> getSteps() {
+			return steps;
+		}
+
+		/**
+		 * Set the steps.
+		 *
+		 * @param steps The steps to set.
+		 * @since 17
+		 */
+		public void setSteps(List<String> steps) {
+			this.steps = steps;
+		}
+
+		/**
+		 * Returns the model.
+		 *
+		 * @return The model.
+		 * @since 17
+		 */
+		public Model getModel() {
+			return model;
+		}
+
+		/**
+		 * Set the model.
+		 *
+		 * @param model The model to set.
+		 * @since 17
+		 */
+		public void setModel(Model model) {
+			this.model = model;
+		}
 
 		/**
 		 * Returns the model mappings.

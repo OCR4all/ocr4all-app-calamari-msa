@@ -49,7 +49,7 @@ public class ProcessorService {
 	 * @version 1.0
 	 * @since 17
 	 */
-	private enum Type {
+	public enum Type {
 		evaluation, recognition, training
 	}
 
@@ -141,6 +141,17 @@ public class ProcessorService {
 		processors.put(Type.evaluation, evaluationProcessor);
 		processors.put(Type.recognition, recognitionProcessor);
 		processors.put(Type.training, trainingProcessor);
+	}
+
+	/**
+	 * Returns the processor.
+	 *
+	 * @param type The processor type to return.
+	 * @return The processor. Null if unknown.
+	 * @since 17
+	 */
+	public String getProcessor(Type type) {
+		return type == null ? null : processors.get(type);
 	}
 
 	/**

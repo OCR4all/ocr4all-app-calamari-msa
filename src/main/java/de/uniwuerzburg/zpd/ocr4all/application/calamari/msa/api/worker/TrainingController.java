@@ -34,21 +34,11 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping(path = TrainingController.contextPath, produces = CoreApiController.applicationJson)
-public class TrainingController extends CoreApiController {
+public class TrainingController extends ProcessorApiController {
 	/**
 	 * The context path.
 	 */
 	public static final String contextPath = apiContextPathVersion_1_0 + "/training";
-
-	/**
-	 * The processor service.
-	 */
-	private final ProcessorService service;
-
-	/**
-	 * The resource service.
-	 */
-	private final ResourceService resourceService;
 
 	/**
 	 * Creates a training controller for the api.
@@ -58,10 +48,7 @@ public class TrainingController extends CoreApiController {
 	 * @since 17
 	 */
 	public TrainingController(ProcessorService service, ResourceService resourceService) {
-		super(TrainingController.class);
-
-		this.service = service;
-		this.resourceService = resourceService;
+		super(TrainingController.class, service, resourceService);
 	}
 
 	/**
@@ -72,12 +59,13 @@ public class TrainingController extends CoreApiController {
 	 */
 	@GetMapping(descriptionRequestMapping)
 	public ResponseEntity<DescriptionResponse> description() {
-		DescriptionResponse description = resourceService.getTraining();
+		ResourceService.Description description = resourceService.getTraining();
 
 		if (description == null)
 			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 		else
-			return ResponseEntity.ok().body(description);
+			return ResponseEntity.ok()
+					.body(getDescription(service.getProcessor(ProcessorService.Type.evaluation), description));
 	}
 
 	/**

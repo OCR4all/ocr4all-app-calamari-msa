@@ -34,21 +34,11 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping(path = RecognitionController.contextPath, produces = CoreApiController.applicationJson)
-public class RecognitionController extends CoreApiController {
+public class RecognitionController extends ProcessorApiController {
 	/**
 	 * The context path.
 	 */
 	public static final String contextPath = apiContextPathVersion_1_0 + "/recognition";
-
-	/**
-	 * The processor service.
-	 */
-	private final ProcessorService service;
-
-	/**
-	 * The resource service.
-	 */
-	private final ResourceService resourceService;
 
 	/**
 	 * Creates a recognition controller for the api.
@@ -58,10 +48,7 @@ public class RecognitionController extends CoreApiController {
 	 * @since 17
 	 */
 	public RecognitionController(ProcessorService service, ResourceService resourceService) {
-		super(RecognitionController.class);
-
-		this.service = service;
-		this.resourceService = resourceService;
+		super(RecognitionController.class, service, resourceService);
 	}
 
 	/**
@@ -72,12 +59,13 @@ public class RecognitionController extends CoreApiController {
 	 */
 	@GetMapping(descriptionRequestMapping)
 	public ResponseEntity<DescriptionResponse> description() {
-		DescriptionResponse description = resourceService.getRecognition();
+		ResourceService.Description description = resourceService.getRecognition();
 
 		if (description == null)
 			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 		else
-			return ResponseEntity.ok().body(description);
+			return ResponseEntity.ok()
+					.body(getDescription(service.getProcessor(ProcessorService.Type.evaluation), description));
 	}
 
 	/**
