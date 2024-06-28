@@ -7,6 +7,8 @@
  */
 package de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.api.worker;
 
+import java.io.IOException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,22 +74,24 @@ public class TrainingController extends ProcessorApiController {
 	/**
 	 * Executes the process and returns the job in the response body.
 	 * 
-	 * @param request The evaluation request.
+	 * @param request The training request.
 	 * @return The job in the response body.
 	 * @since 1.8
 	 */
 	@PostMapping(executeRequestMapping)
 	public ResponseEntity<JobResponse> execute(@RequestBody @Valid TrainingRequest request) {
 		try {
-			logger.debug("execute process: key " + request.getKey() + ", arguments '" + request.getArguments() + "'.");
+			logger.debug("execute process: key " + request.getKey() + ", model id '" + request.getModelId()
+					+ "', arguments '" + request.getArguments() + "'.");
 
 			final SystemProcessJob job = service.startTraining(request.getKey(),
-					resourceService.mapEvaluationArguments(request.getArguments()), request.getDataset());
+					resourceService.mapEvaluationArguments(request.getArguments()), request.getModelId(),
+					request.getDataset());
 
 			logger.debug("running job " + job.getId() + ", key " + job.getKey() + ".");
 
 			return ResponseEntity.ok().body(ApiUtils.getJobResponse(job));
-		} catch (IllegalArgumentException ex) {
+		} catch (IllegalArgumentException | IOException ex) {
 			log(ex);
 
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST);

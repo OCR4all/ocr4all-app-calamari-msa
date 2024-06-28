@@ -7,9 +7,11 @@
  */
 package de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.training.Dataset;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
 import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.job.ThreadPool;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SchedulerService;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SystemProcessJob;
@@ -100,6 +103,11 @@ public class ProcessorService {
 	private final SchedulerService schedulerService;
 
 	/**
+	 * The resource service.
+	 */
+	protected final ResourceService resourceService;
+
+	/**
 	 * Creates a processor service.
 	 * 
 	 * @param dataFolder              The ocr4all data folder.
@@ -114,6 +122,7 @@ public class ProcessorService {
 	 * @param timeConsuming           The processors to be run on the time-consuming
 	 *                                thread pool.
 	 * @param schedulerService        The scheduler service.
+	 * @param resourceService         The resource service.
 	 * @since 17
 	 */
 	public ProcessorService(@Value("${ocr4all.data.folder}") String dataFolder,
@@ -126,7 +135,7 @@ public class ProcessorService {
 			@Value("${ocr4all.calamari.processors.training.name}") String trainingProcessor,
 			@Value("${ocr4all.calamari.processors.training.dataset-filename}") String trainingDatasetFilename,
 			@Value("#{'${ocr4all.calamari.processors.time-consuming}'.split(',')}") List<String> timeConsuming,
-			SchedulerService schedulerService) {
+			SchedulerService schedulerService, ResourceService resourceService) {
 		super();
 
 		this.dataFolder = Paths.get(dataFolder).normalize();
@@ -135,8 +144,6 @@ public class ProcessorService {
 
 		this.isDiscardOutput = isDiscardOutput;
 		this.isDiscardError = isDiscardError;
-
-		this.schedulerService = schedulerService;
 
 		for (String processor : timeConsuming)
 			if (processor != null && !processor.isBlank())
@@ -151,6 +158,9 @@ public class ProcessorService {
 		processors.put(Type.training, trainingProcessor);
 
 		this.trainingDatasetFilename = trainingDatasetFilename;
+
+		this.schedulerService = schedulerService;
+		this.resourceService = resourceService;
 	}
 
 	/**
@@ -242,13 +252,23 @@ public class ProcessorService {
 	 * 
 	 * @param key       The job key.
 	 * @param arguments The processor arguments.
+	 * @param modelId   The model id.
 	 * @param dataset   The dataset.
 	 * @return The scheduled job.
-	 * @throws IllegalArgumentException Throws on folder troubles.
+	 * @throws IllegalArgumentException Throws on argument troubles.
+	 * @throws IOException              Throws if an I/O exception of some sort has
+	 *                                  occurred.
 	 * @since 17
 	 */
-	public SystemProcessJob startTraining(String key, List<String> arguments, Dataset dataset)
-			throws IllegalArgumentException {
+	public SystemProcessJob startTraining(String key, List<String> arguments, String modelId, Dataset dataset)
+			throws IllegalArgumentException, IOException {
+		if (modelId == null || modelId.isBlank())
+			throw new IllegalArgumentException("model id is mandatory and may not be empty");
+
+		Path path = Paths.get(assembleFolder.toString(), modelId.trim()).normalize();
+		if (!path.toString().startsWith(assembleFolder.toString()) || !Files.isDirectory(path))
+			throw new IllegalArgumentException("invalid model id");
+
 		StringBuffer buffer = new StringBuffer();
 		if (dataset.getCollections() != null)
 			for (Dataset.Collection collection : dataset.getCollections())
@@ -262,11 +282,12 @@ public class ProcessorService {
 		if (buffer.length() == 0)
 			throw new IllegalArgumentException("dataset can not be empty");
 
-		// TODO get assemble / model target name!
-		// Files.write(Paths.get(assembleFolder.toString()),
-		// buffer.toString().getBytes());
+		Files.write(Paths.get(path.toString(), trainingDatasetFilename), buffer.toString().getBytes());
 
-		Path path = Paths.get(assembleFolder.toString());
+		// Adds the reserved argument
+		arguments.addAll(Arrays.asList(resourceService.getTraining().getFramework().getArgument().getImages(),
+				trainingDatasetFilename, resourceService.getTraining().getFramework().getArgument().getOutput(),
+				path.toString()));
 
 		SystemProcessJob job = new SystemProcessJob(
 				timeConsuming.contains(Type.training) ? ThreadPool.timeConsuming : ThreadPool.standard, key,

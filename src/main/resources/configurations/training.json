@@ -154,5 +154,11 @@
 				"False"
 			]
 		}
-	]
+	],
+	"framework": {
+		"argument": {
+			"images": "--train.images",
+			"output": "--trainer.output_dir"
+		}
+	}
 }

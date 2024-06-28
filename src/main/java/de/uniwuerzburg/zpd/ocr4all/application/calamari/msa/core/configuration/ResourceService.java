@@ -215,7 +215,7 @@ public class ResourceService {
 	 * @return The evaluation description. Null if not available.
 	 * @since 17
 	 */
-	public Configuration getEvaluation() {
+	public Evaluation getEvaluation() {
 		return evaluation;
 	}
 
@@ -236,7 +236,7 @@ public class ResourceService {
 	 * @return The recognition description. Null if not available.
 	 * @since 17
 	 */
-	public Configuration getRecognition() {
+	public Recognition getRecognition() {
 		return recognition;
 	}
 
@@ -257,7 +257,7 @@ public class ResourceService {
 	 * @return The training description. Null if not available.
 	 * @since 17
 	 */
-	public Configuration getTraining() {
+	public Training getTraining() {
 		return training;
 	}
 
