@@ -91,8 +91,10 @@
 			]
 		}
 	],
-	"dataset-arguments": {
-		"xml-file": "--xml-datase",
-		"image-file": "--image-datase"
+	"framework": {
+		"argument": {
+			"images": "--train.images",
+			"output": "--trainer.output_dir"
+		}
 	}
 }

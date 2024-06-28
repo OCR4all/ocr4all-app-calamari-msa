@@ -40,9 +40,11 @@ ocr4all:
       output: false
       error: false
     processors:
-      evaluation: calamari-eval
-      recognition: calamari-predict
-      training: calamari-training
+      evaluation.name: calamari-eval
+      recognition.name: calamari-predict
+      training:
+        name: calamari-training
+        dataset-filename: dataset.files
       time-consuming: training,recognition
   
 #

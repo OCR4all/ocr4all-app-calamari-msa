@@ -19,7 +19,8 @@ import org.springframework.web.server.ResponseStatusException;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.DescriptionResponse;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.RecognitionRequest;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ProcessorService;
-import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ResourceService;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.Configuration;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
 import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.api.domain.JobResponse;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.api.util.ApiUtils;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SystemProcessJob;
@@ -59,7 +60,7 @@ public class RecognitionController extends ProcessorApiController {
 	 */
 	@GetMapping(descriptionRequestMapping)
 	public ResponseEntity<DescriptionResponse> description() {
-		ResourceService.Configuration configuration = resourceService.getRecognition();
+		Configuration configuration = resourceService.getRecognition();
 
 		if (configuration == null)
 			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();

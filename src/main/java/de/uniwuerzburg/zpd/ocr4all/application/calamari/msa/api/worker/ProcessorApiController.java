@@ -9,7 +9,8 @@ package de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.api.worker;
 
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.DescriptionResponse;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ProcessorService;
-import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ResourceService;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.Configuration;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
 
 /**
  * Defines core controllers for the api.
@@ -52,7 +53,7 @@ public class ProcessorApiController extends CoreApiController {
 	 * @return The description response for the api.
 	 * @since 17
 	 */
-	protected DescriptionResponse getDescription(String identifier, ResourceService.Configuration configuration) {
+	protected DescriptionResponse getDescription(String identifier, Configuration configuration) {
 		return new DescriptionResponse(identifier, configuration.getDescription(), configuration.getCategories(),
 				configuration.getSteps(), configuration.getModel());
 	}
