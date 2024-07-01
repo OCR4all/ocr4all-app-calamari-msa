@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.training.Dataset;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.training.ModelConfiguration;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
 import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.job.ThreadPool;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SchedulerService;
@@ -308,59 +309,6 @@ public class ProcessorService {
 		schedulerService.start(job);
 
 		return job;
-	}
-
-	/**
-	 * Defines model configurations.
-	 *
-	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
-	 * @version 1.0
-	 * @since 17
-	 */
-	public static class ModelConfiguration {
-		/**
-		 * The folder.
-		 */
-		private final String folder;
-
-		/**
-		 * The engine file.
-		 */
-		private final String engine;
-
-		/**
-		 * Creates model configurations.
-		 * 
-		 * @param folder The folder.
-		 * @param engine The engine file.
-		 * @since 17
-		 */
-		public ModelConfiguration(String folder, String engine) {
-			super();
-			this.folder = folder;
-			this.engine = engine;
-		}
-
-		/**
-		 * Returns the folder.
-		 *
-		 * @return The folder.
-		 * @since 17
-		 */
-		public String getFolder() {
-			return folder;
-		}
-
-		/**
-		 * Returns the engine.
-		 *
-		 * @return The engine.
-		 * @since 17
-		 */
-		public String getEngine() {
-			return engine;
-		}
-
 	}
 
 }
