@@ -53,10 +53,36 @@ public class Training extends Configuration {
 	 */
 	public static class Framework {
 		/**
+		 * The version.
+		 */
+		@NotBlank
+		private String version;
+
+		/**
 		 * The argument.
 		 */
 		@NotNull
 		private Argument argument;
+
+		/**
+		 * Returns the version.
+		 *
+		 * @return The version.
+		 * @since 17
+		 */
+		public String getVersion() {
+			return version;
+		}
+
+		/**
+		 * Set the version.
+		 *
+		 * @param version The version to set.
+		 * @since 17
+		 */
+		public void setVersion(String version) {
+			this.version = version;
+		}
 
 		/**
 		 * Returns the argument.

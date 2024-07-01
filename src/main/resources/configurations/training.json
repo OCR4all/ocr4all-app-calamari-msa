@@ -156,6 +156,7 @@
 		}
 	],
 	"framework": {
+		"version": "2.2.3",
 		"argument": {
 			"images": "--train.images",
 			"output": "--trainer.output_dir"

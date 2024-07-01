@@ -25,6 +25,8 @@ import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.R
 import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.job.ThreadPool;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SchedulerService;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SystemProcessJob;
+import de.uniwuerzburg.zpd.ocr4all.application.persistence.PersistenceManager;
+import de.uniwuerzburg.zpd.ocr4all.application.persistence.assemble.Engine;
 import de.uniwuerzburg.zpd.ocr4all.application.spi.util.SystemProcess;
 
 /**
@@ -250,22 +252,24 @@ public class ProcessorService {
 	/**
 	 * Creates a job to perform the training process and starts it on the scheduler.
 	 * 
-	 * @param key       The job key.
-	 * @param arguments The processor arguments.
-	 * @param modelId   The model id.
-	 * @param dataset   The dataset.
+	 * @param key                The job key.
+	 * @param arguments          The processor arguments.
+	 * @param modelId            The model id.
+	 * @param dataset            The dataset.
+	 * @param modelConfiguration The model configuration.
+	 * @param user               The user.
 	 * @return The scheduled job.
 	 * @throws IllegalArgumentException Throws on argument troubles.
 	 * @throws IOException              Throws if an I/O exception of some sort has
 	 *                                  occurred.
 	 * @since 17
 	 */
-	public SystemProcessJob startTraining(String key, List<String> arguments, String modelId, Dataset dataset)
-			throws IllegalArgumentException, IOException {
+	public SystemProcessJob startTraining(String key, List<String> arguments, String modelId, Dataset dataset,
+			ModelConfiguration modelConfiguration, String user) throws IllegalArgumentException, IOException {
 		if (modelId == null || modelId.isBlank())
 			throw new IllegalArgumentException("model id is mandatory and may not be empty");
 
-		Path path = Paths.get(assembleFolder.toString(), modelId.trim()).normalize();
+		final Path path = Paths.get(assembleFolder.toString(), modelId.trim()).normalize();
 		if (!path.toString().startsWith(assembleFolder.toString()) || !Files.isDirectory(path))
 			throw new IllegalArgumentException("invalid model id");
 
@@ -273,7 +277,7 @@ public class ProcessorService {
 		if (dataset.getCollections() != null)
 			for (Dataset.Collection collection : dataset.getCollections())
 				if (collection.getId() != null && !collection.getId().isBlank()) {
-					String prefix = Paths.get(dataset.toString(), collection.getId().trim()).toString();
+					String prefix = Paths.get(dataFolder.toString(), collection.getId().trim()).toString();
 					for (String image : collection.getImages())
 						if (image != null && !image.isBlank())
 							buffer.append(Paths.get(prefix, image.trim()).toString() + System.lineSeparator());
@@ -282,12 +286,20 @@ public class ProcessorService {
 		if (buffer.length() == 0)
 			throw new IllegalArgumentException("dataset can not be empty");
 
-		Files.write(Paths.get(path.toString(), trainingDatasetFilename), buffer.toString().getBytes());
+		Files.write(Paths.get(path.toString(), modelConfiguration.getFolder(), trainingDatasetFilename),
+				buffer.toString().getBytes());
 
-		// Adds the reserved argument
+		// Adds the reserved arguments
 		arguments.addAll(Arrays.asList(resourceService.getTraining().getFramework().getArgument().getImages(),
-				trainingDatasetFilename, resourceService.getTraining().getFramework().getArgument().getOutput(),
-				path.toString()));
+				Paths.get(modelConfiguration.getFolder(), trainingDatasetFilename).toString(),
+				resourceService.getTraining().getFramework().getArgument().getOutput(), path.toString()));
+
+		// Persist the engine configuration.
+		(new PersistenceManager(
+				Paths.get(path.toString(), modelConfiguration.getFolder(), modelConfiguration.getEngine()),
+				de.uniwuerzburg.zpd.ocr4all.application.persistence.Type.assemble_engine_v1))
+				.persist(new Engine(user, Engine.Type.Calamari,
+						resourceService.getTraining().getFramework().getVersion(), arguments));
 
 		SystemProcessJob job = new SystemProcessJob(
 				timeConsuming.contains(Type.training) ? ThreadPool.timeConsuming : ThreadPool.standard, key,
@@ -297,4 +309,58 @@ public class ProcessorService {
 
 		return job;
 	}
+
+	/**
+	 * Defines model configurations.
+	 *
+	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
+	 * @version 1.0
+	 * @since 17
+	 */
+	public static class ModelConfiguration {
+		/**
+		 * The folder.
+		 */
+		private final String folder;
+
+		/**
+		 * The engine file.
+		 */
+		private final String engine;
+
+		/**
+		 * Creates model configurations.
+		 * 
+		 * @param folder The folder.
+		 * @param engine The engine file.
+		 * @since 17
+		 */
+		public ModelConfiguration(String folder, String engine) {
+			super();
+			this.folder = folder;
+			this.engine = engine;
+		}
+
+		/**
+		 * Returns the folder.
+		 *
+		 * @return The folder.
+		 * @since 17
+		 */
+		public String getFolder() {
+			return folder;
+		}
+
+		/**
+		 * Returns the engine.
+		 *
+		 * @return The engine.
+		 * @since 17
+		 */
+		public String getEngine() {
+			return engine;
+		}
+
+	}
+
 }
