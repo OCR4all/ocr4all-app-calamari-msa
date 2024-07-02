@@ -130,6 +130,15 @@
 				"description": "deep3: cnn=40:3x3,pool=2x2,cnn=60:3x3,pool=2x2,cnn=120:3x3,lstm=200,lstm=200,lstm=200,dropout=0.5",
 				"default": "cnn=40:3x3,pool=2x2,cnn=60:3x3,pool=2x2,lstm=200,dropout=0.5"
 			}
+		],
+		"recognition-models": [
+			{
+				"index": 18,
+				"argument": "--weights",
+				"label": "Recognition models (optional)",
+				"minimum-version": "2.2.3",
+				"multiple-models": true
+			}
 		]
 	},
 	"mappings": [

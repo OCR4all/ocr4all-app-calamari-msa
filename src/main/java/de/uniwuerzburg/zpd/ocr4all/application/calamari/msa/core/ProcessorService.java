@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -20,8 +21,9 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.training.Dataset;
-import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.training.ModelConfiguration;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.Batch;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.BatchArgument;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.ModelConfiguration;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
 import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.job.ThreadPool;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SchedulerService;
@@ -257,6 +259,7 @@ public class ProcessorService {
 	 * @param arguments          The processor arguments.
 	 * @param modelId            The model id.
 	 * @param dataset            The dataset.
+	 * @param models             The models. Null or empty if not model is used.
 	 * @param modelConfiguration The model configuration.
 	 * @param user               The user.
 	 * @return The scheduled job.
@@ -265,23 +268,30 @@ public class ProcessorService {
 	 *                                  occurred.
 	 * @since 17
 	 */
-	public SystemProcessJob startTraining(String key, List<String> arguments, String modelId, Dataset dataset,
-			ModelConfiguration modelConfiguration, String user) throws IllegalArgumentException, IOException {
+	public SystemProcessJob startTraining(String key, List<String> arguments, String modelId, Batch dataset,
+			BatchArgument models, ModelConfiguration modelConfiguration, String user)
+			throws IllegalArgumentException, IOException {
 		if (modelId == null || modelId.isBlank())
 			throw new IllegalArgumentException("model id is mandatory and may not be empty");
 
-		final Path path = Paths.get(assembleFolder.toString(), modelId.trim()).normalize();
-		if (!path.toString().startsWith(assembleFolder.toString()) || !Files.isDirectory(path))
-			throw new IllegalArgumentException("invalid model id");
+		modelId = modelId.trim();
 
+		final Path path = Paths.get(assembleFolder.toString(), modelId).normalize();
+		if (!path.toString().startsWith(assembleFolder.toString()) || !Files.isDirectory(path))
+			throw new IllegalArgumentException("invalid model id '" + modelId + "'");
+
+		if (!Files.isDirectory(path))
+			throw new IllegalArgumentException("unknown model id '" + modelId + "'");
+
+		// The dataset
 		StringBuffer buffer = new StringBuffer();
-		if (dataset.getCollections() != null)
-			for (Dataset.Collection collection : dataset.getCollections())
-				if (collection.getId() != null && !collection.getId().isBlank()) {
-					String prefix = Paths.get(dataFolder.toString(), collection.getId().trim()).toString();
-					for (String image : collection.getImages())
-						if (image != null && !image.isBlank())
-							buffer.append(Paths.get(prefix, image.trim()).toString() + System.lineSeparator());
+		if (dataset.getItems() != null)
+			for (Batch.Item item : dataset.getItems())
+				if (item.getId() != null && !item.getId().isBlank()) {
+					String prefix = Paths.get(dataFolder.toString(), item.getId().trim()).toString();
+					for (String file : item.getFiles())
+						if (file != null && !file.isBlank())
+							buffer.append(Paths.get(prefix, file.trim()).toString() + System.lineSeparator());
 				}
 
 		if (buffer.length() == 0)
@@ -290,10 +300,27 @@ public class ProcessorService {
 		Files.write(Paths.get(path.toString(), modelConfiguration.getFolder(), trainingDatasetFilename),
 				buffer.toString().getBytes());
 
+		// The models
+		List<String> modelArguments = new ArrayList<>();
+		if (models != null && models.getItems() != null && !models.getItems().isEmpty() && models.getArgument() != null
+				&& !models.getArgument().isBlank())
+			for (Batch.Item item : models.getItems())
+				if (item.getId() != null && !item.getId().isBlank()) {
+					String prefix = Paths.get(assembleFolder.toString(), item.getId().trim()).toString();
+					for (String file : item.getFiles())
+						if (file != null && !file.isBlank())
+							modelArguments.add(Paths.get(prefix, file.trim()).toString());
+				}
+
 		// Adds the reserved arguments
 		arguments.addAll(Arrays.asList(resourceService.getTraining().getFramework().getArgument().getImages(),
 				Paths.get(modelConfiguration.getFolder(), trainingDatasetFilename).toString(),
 				resourceService.getTraining().getFramework().getArgument().getOutput(), path.toString()));
+
+		if (!modelArguments.isEmpty()) {
+			arguments.add(models.getArgument().trim());
+			arguments.addAll(modelArguments);
+		}
 
 		// Persist the engine configuration.
 		(new PersistenceManager(
