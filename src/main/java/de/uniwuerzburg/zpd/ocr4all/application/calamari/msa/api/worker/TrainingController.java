@@ -85,7 +85,7 @@ public class TrainingController extends ProcessorApiController {
 					+ "', arguments '" + request.getArguments() + "'.");
 
 			final SystemProcessJob job = service.startTraining(request.getKey(),
-					resourceService.mapEvaluationArguments(request.getArguments()), request.getModelId(),
+					resourceService.mapTrainingArguments(request.getArguments()), request.getModelId(),
 					request.getDataset(), request.getModels(), request.getModelConfiguration(), request.getUser());
 
 			logger.debug("running job " + job.getId() + ", key " + job.getKey() + ".");

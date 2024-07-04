@@ -253,6 +253,36 @@ public class ProcessorService {
 	}
 
 	/**
+	 * Adds the model arguments to arguments.
+	 * 
+	 * @param arguments The arguments.
+	 * @param models    The model arguments.
+	 * @since 17
+	 */
+	private void addModelArguments(List<String> arguments, List<BatchArgument> models) {
+		if (models != null)
+			for (BatchArgument argument : models) {
+				List<String> batches = new ArrayList<>();
+				
+				if (argument != null && argument.getItems() != null && !argument.getItems().isEmpty()
+						&& argument.getArgument() != null && !argument.getArgument().isBlank())
+					for (Batch.Item item : argument.getItems())
+						if (item.getId() != null && !item.getId().isBlank()) {
+							String prefix = Paths.get(assembleFolder.toString(), item.getId().trim()).toString();
+							for (String file : item.getFiles())
+								if (file != null && !file.isBlank())
+									batches.add(Paths.get(prefix, file.trim()).toString());
+						}
+
+				if (!batches.isEmpty()) {
+					arguments.add(argument.getArgument().trim());
+					arguments.addAll(batches);
+				}
+			}
+
+	}
+
+	/**
 	 * Creates a job to perform the training process and starts it on the scheduler.
 	 * 
 	 * @param key                The job key.
@@ -269,7 +299,7 @@ public class ProcessorService {
 	 * @since 17
 	 */
 	public SystemProcessJob startTraining(String key, List<String> arguments, String modelId, Batch dataset,
-			BatchArgument models, ModelConfiguration modelConfiguration, String user)
+			List<BatchArgument> models, ModelConfiguration modelConfiguration, String user)
 			throws IllegalArgumentException, IOException {
 		if (modelId == null || modelId.isBlank())
 			throw new IllegalArgumentException("model id is mandatory and may not be empty");
@@ -300,27 +330,13 @@ public class ProcessorService {
 		Files.write(Paths.get(path.toString(), modelConfiguration.getFolder(), trainingDatasetFilename),
 				buffer.toString().getBytes());
 
-		// The models
-		List<String> modelArguments = new ArrayList<>();
-		if (models != null && models.getItems() != null && !models.getItems().isEmpty() && models.getArgument() != null
-				&& !models.getArgument().isBlank())
-			for (Batch.Item item : models.getItems())
-				if (item.getId() != null && !item.getId().isBlank()) {
-					String prefix = Paths.get(assembleFolder.toString(), item.getId().trim()).toString();
-					for (String file : item.getFiles())
-						if (file != null && !file.isBlank())
-							modelArguments.add(Paths.get(prefix, file.trim()).toString());
-				}
-
 		// Adds the reserved arguments
 		arguments.addAll(Arrays.asList(resourceService.getTraining().getFramework().getArgument().getImages(),
 				Paths.get(modelConfiguration.getFolder(), trainingDatasetFilename).toString(),
 				resourceService.getTraining().getFramework().getArgument().getOutput(), path.toString()));
 
-		if (!modelArguments.isEmpty()) {
-			arguments.add(models.getArgument().trim());
-			arguments.addAll(modelArguments);
-		}
+		// Adds the model arguments
+		addModelArguments(arguments, models);
 
 		// Persist the engine configuration.
 		(new PersistenceManager(
