@@ -137,7 +137,8 @@
 				"argument": "--weights",
 				"label": "Recognition models (optional)",
 				"minimum-version": "2.2.3",
-				"multiple-models": true
+				"multiple-models": true,
+				"suffix": ".ckpt"
 			}
 		]
 	},
