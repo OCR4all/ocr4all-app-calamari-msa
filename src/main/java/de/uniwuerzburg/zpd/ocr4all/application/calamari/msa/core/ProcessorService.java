@@ -342,8 +342,8 @@ public class ProcessorService {
 		(new PersistenceManager(
 				Paths.get(path.toString(), modelConfiguration.getFolder(), modelConfiguration.getEngine()),
 				de.uniwuerzburg.zpd.ocr4all.application.persistence.Type.assemble_engine_v1))
-				.persist(new Engine(Engine.State.running, user, Engine.Type.Calamari,
-						resourceService.getTraining().getFramework().getVersion(), true, processors.get(Type.training),
+				.persist(new Engine(user, Engine.Method.processor, Engine.State.running, Engine.Type.Calamari,
+						resourceService.getTraining().getFramework().getVersion(), processors.get(Type.training),
 						arguments));
 
 		SystemProcessJob job = new SystemProcessJob(
