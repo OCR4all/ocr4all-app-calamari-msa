@@ -131,13 +131,13 @@
 				"default": "cnn=40:3x3,pool=2x2,cnn=60:3x3,pool=2x2,lstm=200,dropout=0.5"
 			}
 		],
-		"recognition-models": [
+		"weights": [
 			{
 				"index": 18,
 				"argument": "--weights",
-				"label": "Recognition models (optional)",
+				"label": "Weights (optional)",
 				"minimum-version": "2.2.3",
-				"multiple-models": true,
+				"multiple-select": true,
 				"suffix": ".ckpt"
 			}
 		]

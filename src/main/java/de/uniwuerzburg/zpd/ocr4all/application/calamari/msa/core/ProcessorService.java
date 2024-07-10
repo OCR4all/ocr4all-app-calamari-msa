@@ -28,7 +28,6 @@ import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.R
 import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.job.ThreadPool;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SchedulerService;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SystemProcessJob;
-import de.uniwuerzburg.zpd.ocr4all.application.persistence.PersistenceManager;
 import de.uniwuerzburg.zpd.ocr4all.application.persistence.assemble.Engine;
 import de.uniwuerzburg.zpd.ocr4all.application.spi.util.SystemProcess;
 
@@ -291,15 +290,14 @@ public class ProcessorService {
 	 * @param dataset            The dataset.
 	 * @param models             The models. Null or empty if not model is used.
 	 * @param modelConfiguration The model configuration.
-	 * @param user               The user.
 	 * @return The scheduled job.
 	 * @throws IllegalArgumentException Throws on argument troubles.
 	 * @throws IOException              Throws if an I/O exception of some sort has
 	 *                                  occurred.
 	 * @since 17
 	 */
-	public SystemProcessJob startTraining(String key, List<String> arguments, String modelId, Batch dataset,
-			List<BatchArgument> models, ModelConfiguration modelConfiguration, String user)
+	public EngineJob startTraining(String key, List<String> arguments, String modelId, Batch dataset,
+			List<BatchArgument> models, ModelConfiguration modelConfiguration)
 			throws IllegalArgumentException, IOException {
 		if (modelId == null || modelId.isBlank())
 			throw new IllegalArgumentException("model id is mandatory and may not be empty");
@@ -338,21 +336,14 @@ public class ProcessorService {
 		// Adds the model arguments
 		addModelArguments(arguments, models);
 
-		// Persist the engine configuration.
-		(new PersistenceManager(
-				Paths.get(path.toString(), modelConfiguration.getFolder(), modelConfiguration.getEngine()),
-				de.uniwuerzburg.zpd.ocr4all.application.persistence.Type.assemble_engine_v1))
-				.persist(new Engine(user, Engine.Method.processor, Engine.State.running, Engine.Type.Calamari,
-						resourceService.getTraining().getFramework().getVersion(), processors.get(Type.training),
-						arguments));
-
 		SystemProcessJob job = new SystemProcessJob(
 				timeConsuming.contains(Type.training) ? ThreadPool.timeConsuming : ThreadPool.standard, key,
 				new SystemProcess(path, processors.get(Type.training)), isAddEnvironmentStandardOutput, isDiscardOutput,
 				isDiscardError, arguments);
 		schedulerService.start(job);
 
-		return job;
+		return new EngineJob(job, new Engine(null, Engine.Method.processor, Engine.State.running, Engine.Type.Calamari,
+				resourceService.getTraining().getFramework().getVersion(), processors.get(Type.training), arguments));
 	}
 
 }

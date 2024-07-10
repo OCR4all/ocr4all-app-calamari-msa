@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.DescriptionResponse;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.TrainingJobResponse;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.TrainingRequest;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.EngineJob;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ProcessorService;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.Configuration;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
-import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.api.domain.JobResponse;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.api.util.ApiUtils;
-import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SystemProcessJob;
 import jakarta.validation.Valid;
 
 /**
@@ -79,18 +79,19 @@ public class TrainingController extends ProcessorApiController {
 	 * @since 1.8
 	 */
 	@PostMapping(executeRequestMapping)
-	public ResponseEntity<JobResponse> execute(@RequestBody @Valid TrainingRequest request) {
+	public ResponseEntity<TrainingJobResponse> execute(@RequestBody @Valid TrainingRequest request) {
 		try {
 			logger.debug("execute process: key " + request.getKey() + ", model id '" + request.getModelId()
 					+ "', arguments '" + request.getArguments() + "'.");
 
-			final SystemProcessJob job = service.startTraining(request.getKey(),
+			final EngineJob engineJob = service.startTraining(request.getKey(),
 					resourceService.mapTrainingArguments(request.getArguments()), request.getModelId(),
-					request.getDataset(), request.getModels(), request.getModelConfiguration(), request.getUser());
+					request.getDataset(), request.getModels(), request.getModelConfiguration());
 
-			logger.debug("running job " + job.getId() + ", key " + job.getKey() + ".");
+			logger.debug("running job " + engineJob.getJob().getId() + ", key " + engineJob.getJob().getKey() + ".");
 
-			return ResponseEntity.ok().body(ApiUtils.getJobResponse(job));
+			return ResponseEntity.ok()
+					.body(new TrainingJobResponse(ApiUtils.getJobResponse(engineJob.getJob()), engineJob.getEngine()));
 		} catch (IllegalArgumentException | IOException ex) {
 			log(ex);
 

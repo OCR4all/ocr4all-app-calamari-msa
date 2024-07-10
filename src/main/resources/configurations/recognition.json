@@ -81,13 +81,13 @@
 				"label": "Line recognition models"
 			}
 		],
-		"recognition-models": [
+		"weights": [
 			{
 				"index": 11,
 				"argument": "--checkpoint",
-				"label": "Recognition models",
+				"label": "Check points",
 				"minimum-version": "2.2.3",
-				"multiple-models": true,
+				"multiple-select": true,
 				"suffix": ".ckpt"
 			}
 		]
