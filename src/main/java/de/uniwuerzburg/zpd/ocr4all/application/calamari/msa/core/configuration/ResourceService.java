@@ -1,14 +1,13 @@
 /**
  * File:     ResourceService.java
- * Package:  de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core
+ * Package:  de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration
  * 
  * Author:   Herbert Baier (herbert.baier@uni-wuerzburg.de)
  * Date:     17.06.2024
  */
-package de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core;
+package de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration;
 
 import java.io.InputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -18,8 +17,6 @@ import org.springframework.web.context.annotation.ApplicationScope;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.DescriptionResponse;
 
 /**
  * Defines resource services.
@@ -37,19 +34,19 @@ public class ResourceService {
 	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ResourceService.class);
 
 	/**
-	 * Defines description types.
+	 * Defines configuration types.
 	 *
 	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
 	 * @version 1.0
 	 * @since 17
 	 */
-	private enum DescriptionType {
+	private enum Type {
 		evaluation, recognition, training;
 
 		/**
 		 * The folder.
 		 */
-		private static final String folder = "descriptions/";
+		private static final String folder = "configurations/";
 
 		/**
 		 * The suffix.
@@ -84,34 +81,24 @@ public class ResourceService {
 	}
 
 	/**
-	 * The evaluation model.
+	 * The evaluation configuration.
 	 */
-	private final Description evaluation;
+	private final Evaluation evaluation;
 
 	/**
-	 * The evaluation argument mappings.
+	 * The recognition configuration.
 	 */
-	private final Hashtable<String, List<String>> evaluationMappings;
+	private final Recognition recognition;
 
 	/**
-	 * The recognition model.
+	 * The training configuration.
 	 */
-	private final Description recognition;
+	private final Training training;
 
 	/**
-	 * The recognition model mappings.
+	 * The model mappings.
 	 */
-	private final Hashtable<String, List<String>> recognitionMappings;
-
-	/**
-	 * The training model.
-	 */
-	private final Description training;
-
-	/**
-	 * The training model mappings.
-	 */
-	private final Hashtable<String, List<String>> trainingMappings;
+	private final Hashtable<Type, Hashtable<String, List<String>>> mappings = new Hashtable<>();
 
 	/**
 	 * Creates a resource service.
@@ -125,33 +112,33 @@ public class ResourceService {
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
 		// Load the models
-		evaluation = load(objectMapper, DescriptionType.evaluation);
-		recognition = load(objectMapper, DescriptionType.recognition);
-		training = load(objectMapper, DescriptionType.training);
+		evaluation = load(Evaluation.class, objectMapper, Type.evaluation);
+		recognition = load(Recognition.class, objectMapper, Type.recognition);
+		training = load(Training.class, objectMapper, Type.training);
 
 		// Load the argument mappings
-		evaluationMappings = getMappings(evaluation, DescriptionType.evaluation);
-		recognitionMappings = getMappings(recognition, DescriptionType.recognition);
-		trainingMappings = getMappings(training, DescriptionType.training);
+		mappings.put(Type.evaluation, getMappings(evaluation, Type.evaluation));
+		mappings.put(Type.recognition, getMappings(recognition, Type.recognition));
+		mappings.put(Type.training, getMappings(training, Type.training));
 	}
 
 	/**
-	 * Loads the description.
+	 * Loads the configuration.
 	 * 
+	 * @param clazz        The configuration class type.
 	 * @param objectMapper The JSON object mapper.
-	 * @param type         The description type.
+	 * @param type         The configuration type.
 	 * @return The model. Null on troubles.
 	 * @since 17
 	 */
-	private static Description load(ObjectMapper objectMapper, DescriptionType type) {
+	private static <T extends Configuration> T load(Class<T> clazz, ObjectMapper objectMapper, Type type) {
 		try {
-			return objectMapper.readValue(type.getResourceAsStream(), Description.class);
+			return objectMapper.readValue(type.getResourceAsStream(), clazz);
 		} catch (Exception e) {
-			logger.error("can not load resource " + type.getResourceName() + " - " + e.getMessage());
+			logger.error("can not load resource " + clazz.getName().toLowerCase() + " - " + e.getMessage());
 
 			return null;
 		}
-
 	}
 
 	/**
@@ -162,11 +149,11 @@ public class ResourceService {
 	 * @return The model mappings.
 	 * @since 17
 	 */
-	private static Hashtable<String, List<String>> getMappings(Description description, DescriptionType type) {
+	private static Hashtable<String, List<String>> getMappings(Configuration description, Type type) {
 		Hashtable<String, List<String>> mapping = new Hashtable<>();
 
 		if (description != null && description.getMappings() != null) {
-			for (Description.Mapping map : description.getMappings())
+			for (Configuration.Mapping map : description.getMappings())
 				if (map.getArgument() != null) {
 					if (mapping.containsKey(map.getArgument()))
 						logger.warn("ambiguous argument '" + map.getArgument() + "' on resource "
@@ -228,8 +215,8 @@ public class ResourceService {
 	 * @return The evaluation description. Null if not available.
 	 * @since 17
 	 */
-	public DescriptionResponse getEvaluation() {
-		return evaluation.ignoreSuperclass();
+	public Evaluation getEvaluation() {
+		return evaluation;
 	}
 
 	/**
@@ -240,7 +227,7 @@ public class ResourceService {
 	 * @since 17
 	 */
 	public List<String> mapEvaluationArguments(List<String> arguments) {
-		return mapArguments(evaluationMappings, arguments);
+		return mapArguments(mappings.get(Type.evaluation), arguments);
 	}
 
 	/**
@@ -249,8 +236,8 @@ public class ResourceService {
 	 * @return The recognition description. Null if not available.
 	 * @since 17
 	 */
-	public DescriptionResponse getRecognition() {
-		return recognition.ignoreSuperclass();
+	public Recognition getRecognition() {
+		return recognition;
 	}
 
 	/**
@@ -261,7 +248,7 @@ public class ResourceService {
 	 * @since 17
 	 */
 	public List<String> mapRecognitionArguments(List<String> arguments) {
-		return mapArguments(recognitionMappings, arguments);
+		return mapArguments(mappings.get(Type.recognition), arguments);
 	}
 
 	/**
@@ -270,8 +257,8 @@ public class ResourceService {
 	 * @return The training description. Null if not available.
 	 * @since 17
 	 */
-	public DescriptionResponse getTraining() {
-		return training.ignoreSuperclass();
+	public Training getTraining() {
+		return training;
 	}
 
 	/**
@@ -282,111 +269,7 @@ public class ResourceService {
 	 * @since 17
 	 */
 	public List<String> mapTrainingArguments(List<String> arguments) {
-		return mapArguments(trainingMappings, arguments);
-	}
-
-	/**
-	 * Defines descriptions.
-	 *
-	 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
-	 * @version 1.0
-	 * @since 17
-	 */
-	public static class Description extends DescriptionResponse {
-		/**
-		 * The serial version UID.
-		 */
-		private static final long serialVersionUID = 1L;
-
-		/**
-		 * The model mappings.
-		 */
-		private List<Mapping> mappings;
-
-		/**
-		 * Returns the model mappings.
-		 *
-		 * @return The model mappings.
-		 * @since 17
-		 */
-		public List<Mapping> getMappings() {
-			return mappings;
-		}
-
-		/**
-		 * Set the model mappings.
-		 *
-		 * @param mappings The model mappings to set.
-		 * @since 17
-		 */
-		public void setMappings(List<Mapping> mappings) {
-			this.mappings = mappings;
-		}
-
-		/**
-		 * Defines model mappings.
-		 *
-		 * @author <a href="mailto:herbert.baier@uni-wuerzburg.de">Herbert Baier</a>
-		 * @version 1.0
-		 * @since 17
-		 */
-		public static class Mapping implements Serializable {
-			/**
-			 * The serial version UID.
-			 */
-			private static final long serialVersionUID = 1L;
-
-			/**
-			 * The argument.
-			 */
-			private String argument;
-
-			/**
-			 * The values.
-			 */
-			private List<String> values;
-
-			/**
-			 * Returns the argument.
-			 *
-			 * @return The argument.
-			 * @since 17
-			 */
-			public String getArgument() {
-				return argument;
-			}
-
-			/**
-			 * Set the argument.
-			 *
-			 * @param argument The argument to set.
-			 * @since 17
-			 */
-			public void setArgument(String argument) {
-				this.argument = argument;
-			}
-
-			/**
-			 * Returns the values.
-			 *
-			 * @return The values.
-			 * @since 17
-			 */
-			public List<String> getValues() {
-				return values;
-			}
-
-			/**
-			 * Set the values.
-			 *
-			 * @param values The values to set.
-			 * @since 17
-			 */
-			public void setValues(List<String> values) {
-				this.values = values;
-			}
-
-		}
+		return mapArguments(mappings.get(Type.training), arguments);
 	}
 
 }

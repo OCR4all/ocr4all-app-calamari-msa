@@ -7,9 +7,12 @@
  */
 package de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
@@ -18,9 +21,14 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.Batch;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.BatchArgument;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.ModelConfiguration;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
 import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.job.ThreadPool;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SchedulerService;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SystemProcessJob;
+import de.uniwuerzburg.zpd.ocr4all.application.persistence.assemble.Engine;
 import de.uniwuerzburg.zpd.ocr4all.application.spi.util.SystemProcess;
 
 /**
@@ -49,7 +57,7 @@ public class ProcessorService {
 	 * @version 1.0
 	 * @since 17
 	 */
-	private enum Type {
+	public enum Type {
 		evaluation, recognition, training
 	}
 
@@ -89,24 +97,36 @@ public class ProcessorService {
 	private final Hashtable<Type, String> processors = new Hashtable<>();
 
 	/**
+	 * The training dataset filename.
+	 */
+	private final String trainingDatasetFilename;
+
+	/**
 	 * The scheduler service.
 	 */
 	private final SchedulerService schedulerService;
 
 	/**
+	 * The resource service.
+	 */
+	protected final ResourceService resourceService;
+
+	/**
 	 * Creates a processor service.
 	 * 
-	 * @param dataFolder           The ocr4all data folder.
-	 * @param assembleFolder       The ocr4all assemble folder.
-	 * @param projectsFolder       The ocr4all projects folder.
-	 * @param isDiscardOutput      True if discards the standard output.
-	 * @param isDiscardError       True if discards the standard error.
-	 * @param evaluationProcessor  The evaluation processor
-	 * @param recognitionProcessor The recognition processor
-	 * @param trainingProcessor    The training processor
-	 * @param timeConsuming        The processors to be run on the time-consuming
-	 *                             thread pool.
-	 * @param schedulerService     The scheduler service.
+	 * @param dataFolder              The ocr4all data folder.
+	 * @param assembleFolder          The ocr4all assemble folder.
+	 * @param projectsFolder          The ocr4all projects folder.
+	 * @param isDiscardOutput         True if discards the standard output.
+	 * @param isDiscardError          True if discards the standard error.
+	 * @param evaluationProcessor     The evaluation processor.
+	 * @param recognitionProcessor    The recognition processor.
+	 * @param trainingProcessor       The training processor.
+	 * @param trainingDatasetFilename The training dataset filename.
+	 * @param timeConsuming           The processors to be run on the time-consuming
+	 *                                thread pool.
+	 * @param schedulerService        The scheduler service.
+	 * @param resourceService         The resource service.
 	 * @since 17
 	 */
 	public ProcessorService(@Value("${ocr4all.data.folder}") String dataFolder,
@@ -114,11 +134,12 @@ public class ProcessorService {
 			@Value("${ocr4all.projects.folder}") String projectsFolder,
 			@Value("${ocr4all.calamari.logging.discard.output}") boolean isDiscardOutput,
 			@Value("${ocr4all.calamari.logging.discard.error}") boolean isDiscardError,
-			@Value("${ocr4all.calamari.processors.evaluation}") String evaluationProcessor,
-			@Value("${ocr4all.calamari.processors.recognition}") String recognitionProcessor,
-			@Value("${ocr4all.calamari.processors.training}") String trainingProcessor,
+			@Value("${ocr4all.calamari.processors.evaluation.name}") String evaluationProcessor,
+			@Value("${ocr4all.calamari.processors.recognition.name}") String recognitionProcessor,
+			@Value("${ocr4all.calamari.processors.training.name}") String trainingProcessor,
+			@Value("${ocr4all.calamari.processors.training.dataset-filename}") String trainingDatasetFilename,
 			@Value("#{'${ocr4all.calamari.processors.time-consuming}'.split(',')}") List<String> timeConsuming,
-			SchedulerService schedulerService) {
+			SchedulerService schedulerService, ResourceService resourceService) {
 		super();
 
 		this.dataFolder = Paths.get(dataFolder).normalize();
@@ -127,8 +148,6 @@ public class ProcessorService {
 
 		this.isDiscardOutput = isDiscardOutput;
 		this.isDiscardError = isDiscardError;
-
-		this.schedulerService = schedulerService;
 
 		for (String processor : timeConsuming)
 			if (processor != null && !processor.isBlank())
@@ -141,6 +160,22 @@ public class ProcessorService {
 		processors.put(Type.evaluation, evaluationProcessor);
 		processors.put(Type.recognition, recognitionProcessor);
 		processors.put(Type.training, trainingProcessor);
+
+		this.trainingDatasetFilename = trainingDatasetFilename;
+
+		this.schedulerService = schedulerService;
+		this.resourceService = resourceService;
+	}
+
+	/**
+	 * Returns the processor.
+	 *
+	 * @param type The processor type to return.
+	 * @return The processor. Null if unknown.
+	 * @since 17
+	 */
+	public String getProcessor(Type type) {
+		return type == null ? null : processors.get(type);
 	}
 
 	/**
@@ -217,26 +252,89 @@ public class ProcessorService {
 	}
 
 	/**
-	 * Creates a job to perform the training process and starts it on the scheduler.
+	 * Adds the model arguments to arguments.
 	 * 
-	 * @param key       The job key.
-	 * @param arguments The processor arguments.
-	 * @param model     The model.
-	 * @return The scheduled job.
-	 * @throws IllegalArgumentException Throws on folder troubles.
+	 * @param arguments The arguments.
+	 * @param models    The model arguments.
 	 * @since 17
 	 */
-	public SystemProcessJob startTraining(String key, List<String> arguments, String model)
-			throws IllegalArgumentException {
-		if (model == null || model.isBlank())
-			throw new IllegalArgumentException("the model parameter is not defined");
+	private void addModelArguments(List<String> arguments, List<BatchArgument> models) {
+		if (models != null)
+			for (BatchArgument argument : models) {
+				List<String> batches = new ArrayList<>();
 
-		Path path = Paths.get(assembleFolder.toString(), model.trim()).normalize();
+				if (argument != null && argument.getItems() != null && !argument.getItems().isEmpty()
+						&& argument.getArgument() != null && !argument.getArgument().isBlank())
+					for (Batch.Item item : argument.getItems())
+						if (item.getId() != null && !item.getId().isBlank()) {
+							String prefix = Paths.get(assembleFolder.toString(), item.getId().trim()).toString();
+							for (String file : item.getFiles())
+								if (file != null && !file.isBlank())
+									batches.add(Paths.get(prefix, file.trim()).toString());
+						}
 
-		if (!path.startsWith(assembleFolder) || !Files.isDirectory(path))
-			throw new IllegalArgumentException("the assemble folder is not a valid directory");
+				if (!batches.isEmpty()) {
+					arguments.add(argument.getArgument().trim());
+					arguments.addAll(batches);
+				}
+			}
 
-		// TODO: use path
+	}
+
+	/**
+	 * Creates a job to perform the training process and starts it on the scheduler.
+	 * 
+	 * @param key                The job key.
+	 * @param arguments          The processor arguments.
+	 * @param modelId            The model id.
+	 * @param dataset            The dataset.
+	 * @param models             The models. Null or empty if not model is used.
+	 * @param modelConfiguration The model configuration.
+	 * @return The scheduled job.
+	 * @throws IllegalArgumentException Throws on argument troubles.
+	 * @throws IOException              Throws if an I/O exception of some sort has
+	 *                                  occurred.
+	 * @since 17
+	 */
+	public EngineJob startTraining(String key, List<String> arguments, String modelId, Batch dataset,
+			List<BatchArgument> models, ModelConfiguration modelConfiguration)
+			throws IllegalArgumentException, IOException {
+		if (modelId == null || modelId.isBlank())
+			throw new IllegalArgumentException("model id is mandatory and may not be empty");
+
+		modelId = modelId.trim();
+
+		final Path path = Paths.get(assembleFolder.toString(), modelId).normalize();
+		if (!path.toString().startsWith(assembleFolder.toString()) || !Files.isDirectory(path))
+			throw new IllegalArgumentException("invalid model id '" + modelId + "'");
+
+		if (!Files.isDirectory(path))
+			throw new IllegalArgumentException("unknown model id '" + modelId + "'");
+
+		// The dataset
+		StringBuffer buffer = new StringBuffer();
+		if (dataset.getItems() != null)
+			for (Batch.Item item : dataset.getItems())
+				if (item.getId() != null && !item.getId().isBlank()) {
+					String prefix = Paths.get(dataFolder.toString(), item.getId().trim()).toString();
+					for (String file : item.getFiles())
+						if (file != null && !file.isBlank())
+							buffer.append(Paths.get(prefix, file.trim()).toString() + System.lineSeparator());
+				}
+
+		if (buffer.length() == 0)
+			throw new IllegalArgumentException("dataset can not be empty");
+
+		Files.write(Paths.get(path.toString(), modelConfiguration.getFolder(), trainingDatasetFilename),
+				buffer.toString().getBytes());
+
+		// Adds the reserved arguments
+		arguments.addAll(Arrays.asList(resourceService.getTraining().getFramework().getArgument().getImages(),
+				Paths.get(modelConfiguration.getFolder(), trainingDatasetFilename).toString(),
+				resourceService.getTraining().getFramework().getArgument().getOutput(), path.toString()));
+
+		// Adds the model arguments
+		addModelArguments(arguments, models);
 
 		SystemProcessJob job = new SystemProcessJob(
 				timeConsuming.contains(Type.training) ? ThreadPool.timeConsuming : ThreadPool.standard, key,
@@ -244,6 +342,8 @@ public class ProcessorService {
 				isDiscardError, arguments);
 		schedulerService.start(job);
 
-		return job;
+		return new EngineJob(job, new Engine(null, Engine.Method.processor, Engine.State.running, Engine.Type.Calamari,
+				resourceService.getTraining().getFramework().getVersion(), processors.get(Type.training), arguments));
 	}
+
 }

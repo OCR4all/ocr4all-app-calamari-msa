@@ -7,6 +7,8 @@
  */
 package de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.api.worker;
 
+import java.io.IOException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,12 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.DescriptionResponse;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.TrainingJobResponse;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.TrainingRequest;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.EngineJob;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ProcessorService;
-import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ResourceService;
-import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.api.domain.JobResponse;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.Configuration;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.api.util.ApiUtils;
-import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SystemProcessJob;
 import jakarta.validation.Valid;
 
 /**
@@ -34,21 +37,11 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping(path = TrainingController.contextPath, produces = CoreApiController.applicationJson)
-public class TrainingController extends CoreApiController {
+public class TrainingController extends ProcessorApiController {
 	/**
 	 * The context path.
 	 */
 	public static final String contextPath = apiContextPathVersion_1_0 + "/training";
-
-	/**
-	 * The processor service.
-	 */
-	private final ProcessorService service;
-
-	/**
-	 * The resource service.
-	 */
-	private final ResourceService resourceService;
 
 	/**
 	 * Creates a training controller for the api.
@@ -58,10 +51,7 @@ public class TrainingController extends CoreApiController {
 	 * @since 17
 	 */
 	public TrainingController(ProcessorService service, ResourceService resourceService) {
-		super(TrainingController.class);
-
-		this.service = service;
-		this.resourceService = resourceService;
+		super(TrainingController.class, service, resourceService);
 	}
 
 	/**
@@ -72,33 +62,37 @@ public class TrainingController extends CoreApiController {
 	 */
 	@GetMapping(descriptionRequestMapping)
 	public ResponseEntity<DescriptionResponse> description() {
-		DescriptionResponse description = resourceService.getTraining();
+		Configuration configuration = resourceService.getTraining();
 
-		if (description == null)
+		if (configuration == null)
 			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 		else
-			return ResponseEntity.ok().body(description);
+			return ResponseEntity.ok()
+					.body(getDescription(service.getProcessor(ProcessorService.Type.evaluation), configuration));
 	}
 
 	/**
 	 * Executes the process and returns the job in the response body.
 	 * 
-	 * @param request The evaluation request.
+	 * @param request The training request.
 	 * @return The job in the response body.
 	 * @since 1.8
 	 */
 	@PostMapping(executeRequestMapping)
-	public ResponseEntity<JobResponse> execute(@RequestBody @Valid TrainingRequest request) {
+	public ResponseEntity<TrainingJobResponse> execute(@RequestBody @Valid TrainingRequest request) {
 		try {
-			logger.debug("execute process: key " + request.getKey() + ", arguments '" + request.getArguments() + "'.");
+			logger.debug("execute process: key " + request.getKey() + ", model id '" + request.getModelId()
+					+ "', arguments '" + request.getArguments() + "'.");
 
-			final SystemProcessJob job = service.startTraining(request.getKey(),
-					resourceService.mapEvaluationArguments(request.getArguments()), request.getModel());
+			final EngineJob engineJob = service.startTraining(request.getKey(),
+					resourceService.mapTrainingArguments(request.getArguments()), request.getModelId(),
+					request.getDataset(), request.getModels(), request.getModelConfiguration());
 
-			logger.debug("running job " + job.getId() + ", key " + job.getKey() + ".");
+			logger.debug("running job " + engineJob.getJob().getId() + ", key " + engineJob.getJob().getKey() + ".");
 
-			return ResponseEntity.ok().body(ApiUtils.getJobResponse(job));
-		} catch (IllegalArgumentException ex) {
+			return ResponseEntity.ok()
+					.body(new TrainingJobResponse(ApiUtils.getJobResponse(engineJob.getJob()), engineJob.getEngine()));
+		} catch (IllegalArgumentException | IOException ex) {
 			log(ex);
 
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST);

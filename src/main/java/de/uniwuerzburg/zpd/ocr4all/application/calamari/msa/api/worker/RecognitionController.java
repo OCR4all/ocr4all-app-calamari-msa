@@ -19,7 +19,8 @@ import org.springframework.web.server.ResponseStatusException;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.DescriptionResponse;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.RecognitionRequest;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ProcessorService;
-import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ResourceService;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.Configuration;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
 import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.api.domain.JobResponse;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.api.util.ApiUtils;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SystemProcessJob;
@@ -34,21 +35,11 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping(path = RecognitionController.contextPath, produces = CoreApiController.applicationJson)
-public class RecognitionController extends CoreApiController {
+public class RecognitionController extends ProcessorApiController {
 	/**
 	 * The context path.
 	 */
 	public static final String contextPath = apiContextPathVersion_1_0 + "/recognition";
-
-	/**
-	 * The processor service.
-	 */
-	private final ProcessorService service;
-
-	/**
-	 * The resource service.
-	 */
-	private final ResourceService resourceService;
 
 	/**
 	 * Creates a recognition controller for the api.
@@ -58,10 +49,7 @@ public class RecognitionController extends CoreApiController {
 	 * @since 17
 	 */
 	public RecognitionController(ProcessorService service, ResourceService resourceService) {
-		super(RecognitionController.class);
-
-		this.service = service;
-		this.resourceService = resourceService;
+		super(RecognitionController.class, service, resourceService);
 	}
 
 	/**
@@ -72,12 +60,13 @@ public class RecognitionController extends CoreApiController {
 	 */
 	@GetMapping(descriptionRequestMapping)
 	public ResponseEntity<DescriptionResponse> description() {
-		DescriptionResponse description = resourceService.getRecognition();
+		Configuration configuration = resourceService.getRecognition();
 
-		if (description == null)
+		if (configuration == null)
 			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 		else
-			return ResponseEntity.ok().body(description);
+			return ResponseEntity.ok()
+					.body(getDescription(service.getProcessor(ProcessorService.Type.evaluation), configuration));
 	}
 
 	/**

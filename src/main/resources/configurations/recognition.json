@@ -80,6 +80,16 @@
 				"argument": "--checkpoin",
 				"label": "Line recognition models"
 			}
+		],
+		"weights": [
+			{
+				"index": 11,
+				"argument": "--checkpoint",
+				"label": "Check points",
+				"minimum-version": "2.2.3",
+				"multiple-select": true,
+				"suffix": ".ckpt"
+			}
 		]
 	},
 	"mappings": [
