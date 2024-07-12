@@ -216,31 +216,25 @@ public class ProcessorService {
 	 * 
 	 * @param key       The job key.
 	 * @param arguments The processor arguments.
+	 * @param models    The models. Null or empty if not model is used.
 	 * @param folder    The working directory of the job. It is relative to the
 	 *                  project folder.
-	 * @param input     The input folder.
-	 * @param output    The output folder.
 	 * @return The scheduled job.
 	 * @throws IllegalArgumentException Throws on folder troubles.
 	 * @since 17
 	 */
-	public SystemProcessJob startRecognition(String key, List<String> arguments, String folder, String input,
-			String output) throws IllegalArgumentException {
+	public SystemProcessJob startRecognition(String key, List<String> arguments, List<BatchArgument> models,
+			String folder) throws IllegalArgumentException {
 		if (folder == null || folder.isBlank())
 			throw new IllegalArgumentException("the folder parameter is not defined");
-
-		if (input == null || input.isBlank())
-			throw new IllegalArgumentException("the input folder parameter is not defined");
-
-		if (output == null || output.isBlank())
-			throw new IllegalArgumentException("the output folder parameter is not defined");
 
 		Path path = Paths.get(projectsFolder.toString(), folder.trim()).normalize();
 
 		if (!path.startsWith(projectsFolder) || !Files.isDirectory(path))
 			throw new IllegalArgumentException("the folder is not a valid directory");
 
-		// TODO: use path, input, output
+		// Adds the model arguments
+		addModelArguments(arguments, models);
 
 		SystemProcessJob job = new SystemProcessJob(
 				timeConsuming.contains(Type.recognition) ? ThreadPool.timeConsuming : ThreadPool.standard, key,

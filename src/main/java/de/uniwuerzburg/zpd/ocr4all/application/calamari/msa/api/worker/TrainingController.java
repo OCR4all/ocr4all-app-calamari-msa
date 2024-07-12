@@ -68,7 +68,7 @@ public class TrainingController extends ProcessorApiController {
 			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 		else
 			return ResponseEntity.ok()
-					.body(getDescription(service.getProcessor(ProcessorService.Type.evaluation), configuration));
+					.body(getDescription(service.getProcessor(ProcessorService.Type.training), configuration));
 	}
 
 	/**

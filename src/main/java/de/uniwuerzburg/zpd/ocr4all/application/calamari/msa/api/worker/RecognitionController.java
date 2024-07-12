@@ -66,7 +66,7 @@ public class RecognitionController extends ProcessorApiController {
 			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 		else
 			return ResponseEntity.ok()
-					.body(getDescription(service.getProcessor(ProcessorService.Type.evaluation), configuration));
+					.body(getDescription(service.getProcessor(ProcessorService.Type.recognition), configuration));
 	}
 
 	/**
@@ -82,8 +82,8 @@ public class RecognitionController extends ProcessorApiController {
 			logger.debug("execute process: key " + request.getKey() + ", arguments '" + request.getArguments() + "'.");
 
 			final SystemProcessJob job = service.startRecognition(request.getKey(),
-					resourceService.mapEvaluationArguments(request.getArguments()), request.getFolder(),
-					request.getInput(), request.getOutput());
+					resourceService.mapRecognitionArguments(request.getArguments()), request.getModels(),
+					request.getFolder());
 
 			logger.debug("running job " + job.getId() + ", key " + job.getKey() + ".");
 
