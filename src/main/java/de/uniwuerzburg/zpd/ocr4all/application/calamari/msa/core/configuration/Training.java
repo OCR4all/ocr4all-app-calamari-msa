@@ -7,6 +7,8 @@
  */
 package de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -126,6 +128,19 @@ public class Training extends Configuration {
 			private String output;
 
 			/**
+			 * The train.
+			 */
+			@NotBlank
+			private String train;
+
+			/**
+			 * The train value.
+			 */
+			@NotBlank
+			@JsonProperty("train-value")
+			private String trainValue;
+
+			/**
 			 * Returns the images.
 			 *
 			 * @return The images.
@@ -163,6 +178,46 @@ public class Training extends Configuration {
 			 */
 			public void setOutput(String output) {
 				this.output = output;
+			}
+
+			/**
+			 * Returns the train.
+			 *
+			 * @return The train.
+			 * @since 17
+			 */
+			public String getTrain() {
+				return train;
+			}
+
+			/**
+			 * Set the train.
+			 *
+			 * @param train The train to set.
+			 * @since 17
+			 */
+			public void setTrain(String train) {
+				this.train = train;
+			}
+
+			/**
+			 * Returns the train value.
+			 *
+			 * @return The train value.
+			 * @since 17
+			 */
+			public String getTrainValue() {
+				return trainValue;
+			}
+
+			/**
+			 * Set the train value.
+			 *
+			 * @param trainValue The train value to set.
+			 * @since 17
+			 */
+			public void setTrainValue(String trainValue) {
+				this.trainValue = trainValue;
 			}
 
 		}

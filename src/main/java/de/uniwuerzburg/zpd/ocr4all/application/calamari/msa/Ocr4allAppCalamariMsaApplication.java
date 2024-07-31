@@ -47,9 +47,10 @@ public class Ocr4allAppCalamariMsaApplication {
 				+ context.getEnvironment().getProperty("ocr4all.data.folder") + "', assemble '"
 				+ context.getEnvironment().getProperty("ocr4all.assemble.folder") + "', projects '"
 				+ context.getEnvironment().getProperty("ocr4all.projects.folder") + "'], processors [evaluation '"
-				+ context.getEnvironment().getProperty("ocr4all.calamari.processors.evaluation") + "', recognition '"
-				+ context.getEnvironment().getProperty("ocr4all.calamari.processors.recognition") + "', training '"
-				+ context.getEnvironment().getProperty("ocr4all.calamari.processors.training") + "'].");
+				+ context.getEnvironment().getProperty("ocr4all.calamari.processors.evaluation.name")
+				+ "', recognition '"
+				+ context.getEnvironment().getProperty("ocr4all.calamari.processors.recognition.name") + "', training '"
+				+ context.getEnvironment().getProperty("ocr4all.calamari.processors.training.name") + "'].");
 	}
 
 }

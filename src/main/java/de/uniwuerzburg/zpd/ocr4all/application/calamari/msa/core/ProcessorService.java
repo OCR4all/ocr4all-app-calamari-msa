@@ -325,7 +325,9 @@ public class ProcessorService {
 		// Adds the reserved arguments
 		arguments.addAll(Arrays.asList(resourceService.getTraining().getFramework().getArgument().getImages(),
 				Paths.get(modelConfiguration.getFolder(), trainingDatasetFilename).toString(),
-				resourceService.getTraining().getFramework().getArgument().getOutput(), path.toString()));
+				resourceService.getTraining().getFramework().getArgument().getOutput(), path.toString(),
+				resourceService.getTraining().getFramework().getArgument().getTrain(),
+				resourceService.getTraining().getFramework().getArgument().getTrainValue()));
 
 		// Adds the model arguments
 		addModelArguments(arguments, models);

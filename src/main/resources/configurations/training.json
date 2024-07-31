@@ -97,22 +97,6 @@
 				"description": "If zero a 'random' seed is used",
 				"default": 0,
 				"minimum": 0
-			},
-			{
-				"index": 17,
-				"argument": "--skewsteps",
-				"label": "Steps between 0 and +/-maxskew to estimate the possible skew of a region",
-				"default": 8,
-				"step": 1
-			}
-		],
-		"decimals": [
-			{
-				"index": 16,
-				"argument": "--maxskew",
-				"label": "Maximum estimated skew of a region",
-				"default": 2.0,
-				"step": 0.001
 			}
 		],
 		"strings": [
@@ -169,7 +153,9 @@
 		"version": "2.2.3",
 		"argument": {
 			"images": "--train.images",
-			"output": "--trainer.output_dir"
+			"output": "--best_models_dir",
+			"train": "--train",
+			"train-value": "PageXML"
 		}
 	}
 }

@@ -43,7 +43,7 @@ ocr4all:
       evaluation.name: calamari-eval
       recognition.name: calamari-predict
       training:
-        name: calamari-training
+        name: calamari-cross-fold-train
         dataset-filename: dataset.files
       time-consuming: training,recognition
   
