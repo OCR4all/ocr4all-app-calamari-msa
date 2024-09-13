@@ -12,7 +12,7 @@
 				"index": 3,
 				"argument": "--skip_empty_gt",
 				"label": "Skip empty ground truth data",
-				"default": true
+				"default": false
 			}
 		],
 		"integers": [
@@ -26,16 +26,16 @@
 			{
 				"index": 2,
 				"argument": "--n_confusions",
-				"label": "Output this many top confusion",
-				"default": 10,
+				"label": "Output this many top confusion (use -1 for all)",
+				"default": -1,
 				"step": 1,
-				"minimum": 1
+				"minimum": -1
 			}
 		],
 		"selects": [
 			{
 				"index": 4,
-				"argument": "--non_existing_file_handling_mode",
+				"argument": "--non_existing_pred_handling_mode",
 				"label": "Non existing file handling mode",
 				"multiple-options": false,
 				"items": [
@@ -48,7 +48,7 @@
 					{
 						"value": "empty",
 						"description": "Treat as empty files",
-						"selected": false,
+						"selected": true,
 						"disabled": false
 					},
 					{
@@ -60,5 +60,20 @@
 				]
 			}
 		]
-	}
+	},
+	"mappings": [
+		{
+			"argument": "--skip_empty_gt",
+			"values": [
+				"--skip_empty_gt",
+				"True"
+			]
+		},
+		{
+			"argument": "--num_threads",
+			"values": [
+				"--evaluator.setup.num_processes"
+			]
+		}
+	]
 }
