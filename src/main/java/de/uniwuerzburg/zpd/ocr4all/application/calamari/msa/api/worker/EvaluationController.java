@@ -7,11 +7,6 @@
  */
 package de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.api.worker;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,14 +19,9 @@ import org.springframework.web.server.ResponseStatusException;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.DescriptionResponse;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.EvaluationRequest;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ProcessorService;
-import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ProcessorService.Type;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.Configuration;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
 import de.uniwuerzburg.zpd.ocr4all.application.communication.action.EvaluationMeasure;
-import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.job.ThreadPool;
-import de.uniwuerzburg.zpd.ocr4all.application.msa.api.util.ApiUtils;
-import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SystemProcessJob;
-import de.uniwuerzburg.zpd.ocr4all.application.spi.util.SystemProcess;
 import jakarta.validation.Valid;
 
 /**
@@ -76,34 +66,12 @@ public class EvaluationController extends ProcessorApiController {
 			return ResponseEntity.ok()
 					.body(getDescription(service.getProcessor(ProcessorService.Type.evaluation), configuration));
 	}
-	
-	/**
-	 * Returns the json processor description.
-	 * 
-	 * @param processor The processor.
-	 * @return The json processor description.
-	 * @throws IOException              Throws if an I/O exception of some sort has
-	 *                                  occurred or the process is already running.
-	 * @throws IllegalArgumentException Throws if the command is not defined.
-	 * @since 17
-	 */
-	public String getEvaluation(List<String> arguments) throws IOException, IllegalArgumentException {
-		SystemProcess process = new SystemProcess(processor);
-
-		process.execute(jsonDescriptionParameter);
-
-		if (process.getExitValue() == 0)
-			return process.getStandardOutput();
-		else
-			throw new IOException(
-					process.getStandardError().trim() + " (process exit code " + process.getExitValue() + ")");
-	}
 
 	/**
-	 * Executes the process and returns the job in the response body.
+	 * Executes the process and returns the evaluation measure in the response body.
 	 * 
 	 * @param request The evaluation request.
-	 * @return The job in the response body.
+	 * @return The evaluation measure in the response body.
 	 * @since 1.8
 	 */
 	@PostMapping(executeRequestMapping)
@@ -111,12 +79,7 @@ public class EvaluationController extends ProcessorApiController {
 		try {
 			logger.debug("execute process, arguments '" + request.getArguments() + "'.");
 
-			final SystemProcessJob job = service.startEvaluation(request.getKey(),
-					resourceService.mapEvaluationArguments(request.getArguments()), request.getCollection());
-
-			logger.debug("running job " + job.getId() + ", key " + job.getKey() + ".");
-
-			return ResponseEntity.ok().body(ApiUtils.getJobResponse(job));
+			return ResponseEntity.ok().body(service.evaluate(request.getFolder(), request.getArguments()));
 		} catch (IllegalArgumentException ex) {
 			log(ex);
 

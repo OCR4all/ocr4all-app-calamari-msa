@@ -25,6 +25,7 @@ import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.Batch
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.BatchArgument;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.ModelConfiguration;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.util.EvaluationUtils;
 import de.uniwuerzburg.zpd.ocr4all.application.communication.action.EvaluationMeasure;
 import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.job.ThreadPool;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SchedulerService;
@@ -200,9 +201,9 @@ public class ProcessorService {
 
 			process.execute(arguments);
 
-			if (process.getExitValue() == 0) {
-				return process.getStandardOutput();
-			} else
+			if (process.getExitValue() == 0)
+				return EvaluationUtils.parse(process.getStandardOutput());
+			else
 				return new EvaluationMeasure(EvaluationMeasure.State.interrupted,
 						"process exit code " + process.getExitValue() + ": " + process.getStandardError().trim());
 		} catch (Exception e) {
