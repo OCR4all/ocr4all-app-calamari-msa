@@ -79,7 +79,8 @@ public class EvaluationController extends ProcessorApiController {
 		try {
 			logger.debug("execute process, arguments '" + request.getArguments() + "'.");
 
-			return ResponseEntity.ok().body(service.evaluate(request.getFolder(), request.getArguments()));
+			return ResponseEntity.ok().body(service.evaluate(request.getFolder(),
+					resourceService.mapEvaluationArguments(request.getArguments())));
 		} catch (IllegalArgumentException ex) {
 			log(ex);
 

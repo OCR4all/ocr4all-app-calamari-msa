@@ -1,79 +1,108 @@
 {
-	"description": "Evaluates recognitions with Calamari",
-	"categories": [
+	"description" : "Evaluates recognitions with Calamari",
+	"categories" : [
 		"Recognition evaluation"
 	],
-	"steps": [
+	"steps" : [
 		"evaluation/recognition"
 	],
-	"model": {
-		"booleans": [
-			{
-				"index": 3,
-				"argument": "--skip_empty_gt",
-				"label": "Skip empty ground truth data",
-				"default": false
+	"model" : {
+		"booleans" : [{
+				"index" : 3,
+				"argument" : "--skip_empty_gt",
+				"label" : "Skip empty ground truth data",
+				"default" : false
 			}
 		],
-		"integers": [
-			{
-				"index": 1,
-				"argument": "--num_threads",
-				"label": "Number of parallel threads for program execution",
-				"default": 1,
-				"minimum": 1
-			},
-			{
-				"index": 2,
-				"argument": "--n_confusions",
-				"label": "Output this many top confusion (use -1 for all)",
-				"default": -1,
-				"step": 1,
-				"minimum": -1
+		"integers" : [{
+				"index" : 1,
+				"argument" : "--num_threads",
+				"label" : "Number of parallel threads for program execution",
+				"default" : 1,
+				"minimum" : 1
+			}, {
+				"index" : 2,
+				"argument" : "--n_confusions",
+				"label" : "Output this many top confusion (use -1 for all)",
+				"default" : -1,
+				"step" : 1,
+				"minimum" : -1
+			}, {
+				"index" : 5,
+				"argument" : "--gt-index",
+				"label" : "gt text index",
+				"default" : 0,
+				"step" : 1,
+				"minimum" : 0
+			}, {
+				"index" : 6,
+				"argument" : "--pred-index",
+				"label" : "prediction text index",
+				"default" : 1,
+				"step" : 1,
+				"minimum" : 0
 			}
 		],
-		"selects": [
-			{
-				"index": 4,
-				"argument": "--non_existing_pred_handling_mode",
-				"label": "Non existing file handling mode",
-				"multiple-options": false,
-				"items": [
-					{
-						"value": "skip",
-						"description": "Skip files",
-						"selected": false,
-						"disabled": false
-					},
-					{
-						"value": "empty",
-						"description": "Treat as empty files",
-						"selected": true,
-						"disabled": false
-					},
-					{
-						"value": "error",
-						"description": "Throw an error",
-						"selected": false,
-						"disabled": false
+		"selects" : [{
+				"index" : 4,
+				"argument" : "--non_existing_pred_handling_mode",
+				"label" : "Non existing file handling mode",
+				"multiple-options" : false,
+				"items" : [{
+						"value" : "skip",
+						"description" : "Skip files",
+						"selected" : false,
+						"disabled" : false
+					}, {
+						"value" : "empty",
+						"description" : "Treat as empty files",
+						"selected" : true,
+						"disabled" : false
+					}, {
+						"value" : "error",
+						"description" : "Throw an error",
+						"selected" : false,
+						"disabled" : false
 					}
 				]
 			}
 		]
 	},
-	"mappings": [
-		{
-			"argument": "--skip_empty_gt",
-			"values": [
+	"mappings" : [{
+			"argument" : "--skip_empty_gt",
+			"values" : [
 				"--skip_empty_gt",
 				"True"
 			]
-		},
-		{
-			"argument": "--num_threads",
-			"values": [
+		}, {
+			"argument" : "--num_threads",
+			"values" : [
 				"--evaluator.setup.num_processes"
 			]
+		}, {
+			"argument" : "--gt-index",
+			"values" : [
+				"--gt.text_index"
+			]
+		}, {
+			"argument" : "--pred-index",
+			"values" : [
+				"--pred.text_index"
+			]
 		}
-	]
+	],
+	"framework" : {
+		"required-arguments" : [
+			"--gt",
+			"PageXML",
+			"--pred",
+			"PageXML",
+			"--gt.xml_files",
+			"*.xml",
+			"--gt.pred_extension",
+			".xml",
+			"--pred.xml_files",
+			"*.xml"
+		]
+	}
 }

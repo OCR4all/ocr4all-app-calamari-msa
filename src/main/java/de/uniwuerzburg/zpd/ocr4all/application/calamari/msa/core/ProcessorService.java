@@ -197,15 +197,31 @@ public class ProcessorService {
 	 */
 	public EvaluationMeasure evaluate(String folder, List<String> arguments) {
 		try {
-			SystemProcess process = new SystemProcess(temporaryFolder.resolve(folder), processors.get(Type.evaluation));
+			arguments.addAll(resourceService.getEvaluation().getFramework().getRequiredArguments());
+
+			Path path = temporaryFolder.resolve(folder);
+
+			logger.debug(
+					"start evaluation (directory " + path + "): " + processors.get(Type.evaluation) + " " + arguments);
+
+			SystemProcess process = new SystemProcess(path, processors.get(Type.evaluation));
 
 			process.execute(arguments);
 
+			final String standardOutput = process.getStandardOutput();
+			final String standardError = process.getStandardError();
+
 			if (process.getExitValue() == 0)
-				return EvaluationUtils.parse(process.getStandardOutput());
-			else
-				return new EvaluationMeasure(EvaluationMeasure.State.interrupted,
-						"process exit code " + process.getExitValue() + ": " + process.getStandardError().trim());
+				return EvaluationUtils.parse(standardOutput, standardError);
+			else {
+				EvaluationMeasure evaluation = new EvaluationMeasure(EvaluationMeasure.State.interrupted,
+						"process exit code: " + process.getExitValue());
+
+				evaluation.setStandardOutput(standardOutput);
+				evaluation.setStandardError(standardError);
+
+				return evaluation;
+			}
 		} catch (Exception e) {
 			return new EvaluationMeasure(EvaluationMeasure.State.interrupted,
 					e.getClass().getName() + ": " + e.getMessage());
@@ -237,6 +253,9 @@ public class ProcessorService {
 
 		// Adds the model arguments
 		addModelArguments(arguments, models);
+
+		logger.debug("scheduled recognition (directory " + path + "): " + processors.get(Type.recognition) + " "
+				+ arguments);
 
 		SystemProcessJob job = new SystemProcessJob(
 				timeConsuming.contains(Type.recognition) ? ThreadPool.timeConsuming : ThreadPool.standard, key,
@@ -333,6 +352,8 @@ public class ProcessorService {
 
 		// Adds the model arguments
 		addModelArguments(arguments, models);
+
+		logger.debug("scheduled training (directory " + path + "): " + processors.get(Type.training) + " " + arguments);
 
 		SystemProcessJob job = new SystemProcessJob(
 				timeConsuming.contains(Type.training) ? ThreadPool.timeConsuming : ThreadPool.standard, key,

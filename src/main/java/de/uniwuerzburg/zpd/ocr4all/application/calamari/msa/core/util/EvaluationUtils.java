@@ -7,7 +7,6 @@
  */
 package de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.util;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -85,82 +84,96 @@ public class EvaluationUtils {
 	/**
 	 * Returns the evaluation measure.
 	 * 
-	 * @param lines The lines.
+	 * @param state          The state.
+	 * @param message        The message.
+	 * @param standardOutput The system process standard output.
+	 * @param standardError  The system process standard error.
 	 * @return The evaluation measure.
 	 * @since 17
 	 */
-	private static EvaluationMeasure parse(List<String> lines) {
-		EvaluationMeasure evaluation = null;
+	private static EvaluationMeasure getEvaluationMeasure(EvaluationMeasure.State state, String message,
+			String standardOutput, String standardError) {
+		EvaluationMeasure evaluation = new EvaluationMeasure(state, message);
 
-		ParserContext context = ParserContext.summary;
+		evaluation.setStandardOutput(standardOutput);
+		evaluation.setStandardError(standardError);
 
-		for (String line : lines) {
-			switch (context) {
-			case summary:
-				if (context.match(line)) {
-					Matcher matcher = patternContextSummary.matcher(line);
-
-					if (matcher.find())
-						evaluation = new EvaluationMeasure(EvaluationMeasure.State.completed,
-								Float.parseFloat(matcher.group(1)), Integer.parseInt(matcher.group(2)),
-								Integer.parseInt(matcher.group(3)), Integer.parseInt(matcher.group(4)));
-					else
-						return new EvaluationMeasure(EvaluationMeasure.State.inconsistent,
-								"parser error (summary): " + line);
-
-					context = ParserContext.header;
-				}
-
-				break;
-			case header:
-				if (context.match(line))
-					context = ParserContext.detail;
-
-				break;
-			case detail:
-				if (context.match(line)) {
-					Matcher matcher = patternContextDetail.matcher(line);
-
-					if (matcher.find()) {
-						System.out.println("\t1: '" + matcher.group(1) + "'");
-						System.out.println("\t2: '" + matcher.group(2) + "'");
-						System.out.println("\t3: '" + matcher.group(3) + "'");
-						System.out.println("\t4: '" + matcher.group(4) + "'");
-					} else {
-						evaluation.setState(EvaluationMeasure.State.inconsistent);
-
-						String message = evaluation.getMessage();
-						evaluation.setMessage((message == null ? "" : message + System.lineSeparator())
-								+ "parser error (detail): " + line);
-					}
-				} else
-					context = ParserContext.ready;
-
-				break;
-			default:
-				break;
-			}
-
-			if (ParserContext.ready.equals(context))
-				break;
-		}
-
-		return evaluation == null
-				? new EvaluationMeasure(EvaluationMeasure.State.inconsistent, "parser error: no summary available")
-				: evaluation;
+		return evaluation;
 	}
 
 	/**
 	 * Returns the evaluation measure.
 	 * 
-	 * @param evaluation The evaluation to parse the measure.
+	 * @param standardOutput The system process standard output.
+	 * @param standardError  The system process standard error.
 	 * @return The evaluation measure.
 	 * @since 17
 	 */
-	public static EvaluationMeasure parse(String evaluation) {
-		return evaluation == null || evaluation.isBlank()
-				? new EvaluationMeasure(EvaluationMeasure.State.inconsistent, "parser error: no summary available")
-				: parse(evaluation.lines().collect(Collectors.toList()));
+	public static EvaluationMeasure parse(String standardOutput, String standardError) {
+		if (standardOutput == null || standardOutput.isBlank())
+			return getEvaluationMeasure(EvaluationMeasure.State.inconsistent, "parser error: no summary available",
+					standardOutput, standardError);
+		else {
+			EvaluationMeasure evaluation = null;
+
+			ParserContext context = ParserContext.summary;
+
+			for (String line : standardOutput.lines().collect(Collectors.toList())) {
+				switch (context) {
+				case summary:
+					if (context.match(line)) {
+						Matcher matcher = patternContextSummary.matcher(line);
+
+						if (matcher.find())
+							evaluation = new EvaluationMeasure(EvaluationMeasure.State.completed, standardOutput,
+									standardError,
+									new EvaluationMeasure.Summary(Float.parseFloat(matcher.group(1)),
+											Integer.parseInt(matcher.group(2)), Integer.parseInt(matcher.group(3)),
+											Integer.parseInt(matcher.group(4))));
+						else
+							return getEvaluationMeasure(EvaluationMeasure.State.inconsistent,
+									"parser error (summary): " + line, standardOutput, standardError);
+
+						context = ParserContext.header;
+					}
+
+					break;
+				case header:
+					if (context.match(line))
+						context = ParserContext.detail;
+
+					break;
+				case detail:
+					if (context.match(line)) {
+						Matcher matcher = patternContextDetail.matcher(line);
+
+						if (matcher.find())
+							evaluation.getDetails().add(new EvaluationMeasure.Detail(matcher.group(1), matcher.group(2),
+									Integer.parseInt(matcher.group(3)), Float.parseFloat(matcher.group(4))));
+						else {
+							evaluation.setState(EvaluationMeasure.State.inconsistent);
+
+							String message = evaluation.getMessage();
+							evaluation.setMessage((message == null ? "" : message + System.lineSeparator())
+									+ "parser error (detail): " + line);
+						}
+					} else
+						context = ParserContext.ready;
+
+					break;
+				default:
+					break;
+				}
+
+				if (ParserContext.ready.equals(context))
+					break;
+			}
+
+			return evaluation == null
+					? getEvaluationMeasure(EvaluationMeasure.State.inconsistent, "parser error: no summary available",
+							standardOutput, standardError)
+					: evaluation;
+		}
 	}
 
 }
