@@ -111,12 +111,13 @@ public class EvaluationUtils {
 	 */
 	public static EvaluationMeasure parse(String standardOutput, String standardError) {
 		if (standardOutput == null || standardOutput.isBlank())
-			return getEvaluationMeasure(EvaluationMeasure.State.inconsistent, "parser error: no summary available",
-					standardOutput, standardError);
+			return getEvaluationMeasure(EvaluationMeasure.State.inconsistent,
+					"evaluation: parser error - no summary available", standardOutput, standardError);
 		else {
 			EvaluationMeasure evaluation = null;
 
 			ParserContext context = ParserContext.summary;
+			int detail = 0;
 
 			for (String line : standardOutput.lines().collect(Collectors.toList())) {
 				switch (context) {
@@ -132,7 +133,7 @@ public class EvaluationUtils {
 											Integer.parseInt(matcher.group(4))));
 						else
 							return getEvaluationMeasure(EvaluationMeasure.State.inconsistent,
-									"parser error (summary): " + line, standardOutput, standardError);
+									"evaluation: summary parser error - " + line, standardOutput, standardError);
 
 						context = ParserContext.header;
 					}
@@ -145,6 +146,8 @@ public class EvaluationUtils {
 					break;
 				case detail:
 					if (context.match(line)) {
+						detail++;
+
 						Matcher matcher = patternContextDetail.matcher(line);
 
 						if (matcher.find())
@@ -153,9 +156,9 @@ public class EvaluationUtils {
 						else {
 							evaluation.setState(EvaluationMeasure.State.inconsistent);
 
-							String message = evaluation.getMessage();
-							evaluation.setMessage((message == null ? "" : message + System.lineSeparator())
-									+ "parser error (detail): " + line);
+							String stackTrace = evaluation.getStackTrace();
+							evaluation.setStackTrace((stackTrace == null ? "" : stackTrace + System.lineSeparator())
+									+ "evaluation: detail (" + detail + ") parser error - " + line);
 						}
 					} else
 						context = ParserContext.ready;
@@ -170,8 +173,8 @@ public class EvaluationUtils {
 			}
 
 			return evaluation == null
-					? getEvaluationMeasure(EvaluationMeasure.State.inconsistent, "parser error: no summary available",
-							standardOutput, standardError)
+					? getEvaluationMeasure(EvaluationMeasure.State.inconsistent,
+							"evaluation: parser error - no summary available", standardOutput, standardError)
 					: evaluation;
 		}
 	}
