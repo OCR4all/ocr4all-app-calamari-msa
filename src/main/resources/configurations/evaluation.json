@@ -27,20 +27,6 @@
 				"default" : -1,
 				"step" : 1,
 				"minimum" : -1
-			}, {
-				"index" : 5,
-				"argument" : "--gt-index",
-				"label" : "gt text index",
-				"default" : 0,
-				"step" : 1,
-				"minimum" : 0
-			}, {
-				"index" : 6,
-				"argument" : "--pred-index",
-				"label" : "prediction text index",
-				"default" : 1,
-				"step" : 1,
-				"minimum" : 0
 			}
 		],
 		"selects" : [{
@@ -79,16 +65,6 @@
 			"values" : [
 				"--evaluator.setup.num_processes"
 			]
-		}, {
-			"argument" : "--gt-index",
-			"values" : [
-				"--gt.text_index"
-			]
-		}, {
-			"argument" : "--pred-index",
-			"values" : [
-				"--pred.text_index"
-			]
 		}
 	],
 	"framework" : {
@@ -102,7 +78,11 @@
 			"--gt.pred_extension",
 			".xml",
 			"--pred.xml_files",
-			"*.xml"
+			"*.xml",
+			"--gt.text_index",
+			"0",
+			"--pred.text_index",
+			"1"
 		]
 	}
 }
