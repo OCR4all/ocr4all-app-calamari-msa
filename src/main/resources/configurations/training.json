@@ -1,161 +1,142 @@
 {
-	"description": "Dataset training with Calamari",
-	"categories": [
+	"description" : "Dataset training with Calamari",
+	"categories" : [
 		"Dataset training"
 	],
-	"steps": [
+	"steps" : [
 		"training/create-model"
 	],
-	"model": {
-		"booleans": [
-			{
-				"index": 5,
-				"argument": "--codec.keep_loaded",
-				"label": "Keep codec of the loaded model(s)",
-				"default": false
-			},
-			{
-				"index": 10,
-				"argument": "--train.preload",
-				"label": "Load data on the fly instead of preloading it",
-				"description": "Reduces RAM usage, increases processing time",
-				"default": false
-			},
-			{
-				"index": 15,
-				"argument": "--data.skip_invalid",
-				"label": "Do no skip invalid gt, instead raise an exception",
-				"default": false
+	"model" : {
+		"booleans" : [{
+				"index" : 5,
+				"argument" : "--codec.keep_loaded",
+				"label" : "Keep codec of the loaded model(s)",
+				"default" : false
+			}, {
+				"index" : 10,
+				"argument" : "--train.preload",
+				"label" : "Load data on the fly instead of preloading it",
+				"description" : "Reduces RAM usage, increases processing time",
+				"default" : false
+			}, {
+				"index" : 15,
+				"argument" : "--data.skip_invalid",
+				"label" : "Do no skip invalid gt, instead raise an exception",
+				"default" : false
 			}
 		],
-		"integers": [
-			{
-				"index": 1,
-				"argument": "--n_folds",
-				"label": "The number of folds (= the number of models) to train",
-				"default": 5,
-				"minimum": 1
-			},
-			{
-				"index": 2,
-				"argument": "--single_fold",
-				"label": "Only train a single fold (= a single model)"
-			},
-			{
-				"index": 3,
-				"argument": "--max_parallel_models",
-				"label": "Number of models to train in parallel"
-			},
-			{
-				"index": 6,
-				"argument": "--n_augmentations",
-				"label": "Data augmentation",
-				"description": "Number of data augmentations per line",
-				"default": 0,
-				"minimum": 0
-			},
-			{
-				"index": 7,
-				"argument": "--early_stopping.n_to_go",
-				"label": "Early stopping",
-				"description": "The number of models that must be worse than the current best model to stop",
-				"default": 10
-			},
-			{
-				"index": 8,
-				"argument": "--early_stopping.frequency",
-				"label": "Early stopping frequency",
-				"description": "Number of training steps between the evaluation of the current model"
-			},
-			{
-				"index": 9,
-				"argument": "--trainer.epochs",
-				"label": "The number of iterations for training",
-				"description": "If using early stopping, this is the maximum number of iterations",
-				"default": 1000000,
-				"minimum": 1
-			},
-			{
-				"index": 11,
-				"argument": "--train.batch_size",
-				"label": "The batch size to use for training",
-				"default": 5,
-				"step": 1,
-				"minimum": 1
-			},
-			{
-				"index": 12,
-				"argument": "--data.line_height",
-				"label": "The line height",
-				"default": 48,
-				"minimum": 1
-			},
-			{
-				"index": 14,
-				"argument": "--trainer.random_seed",
-				"label": "Seed for random operations",
-				"description": "If zero a 'random' seed is used",
-				"default": 0,
-				"minimum": 0
+		"integers" : [{
+				"index" : 1,
+				"argument" : "--n_folds",
+				"label" : "The number of folds (= the number of models) to train",
+				"default" : 5,
+				"minimum" : 1
+			}, {
+				"index" : 2,
+				"argument" : "--single_fold",
+				"label" : "Only train a single fold (= a single model)"
+			}, {
+				"index" : 3,
+				"argument" : "--max_parallel_models",
+				"label" : "Number of models to train in parallel"
+			}, {
+				"index" : 6,
+				"argument" : "--n_augmentations",
+				"label" : "Data augmentation",
+				"description" : "Number of data augmentations per line",
+				"default" : 0,
+				"minimum" : 0
+			}, {
+				"index" : 7,
+				"argument" : "--early_stopping.n_to_go",
+				"label" : "Early stopping",
+				"description" : "The number of models that must be worse than the current best model to stop",
+				"default" : 10
+			}, {
+				"index" : 8,
+				"argument" : "--early_stopping.frequency",
+				"label" : "Early stopping frequency",
+				"description" : "Number of training steps between the evaluation of the current model"
+			}, {
+				"index" : 9,
+				"argument" : "--trainer.epochs",
+				"label" : "The number of iterations for training",
+				"description" : "If using early stopping, this is the maximum number of iterations",
+				"default" : 1000000,
+				"minimum" : 1
+			}, {
+				"index" : 11,
+				"argument" : "--train.batch_size",
+				"label" : "The batch size to use for training",
+				"default" : 5,
+				"step" : 1,
+				"minimum" : 1
+			}, {
+				"index" : 12,
+				"argument" : "--data.line_height",
+				"label" : "The line height",
+				"default" : 48,
+				"minimum" : 1
+			}, {
+				"index" : 14,
+				"argument" : "--trainer.random_seed",
+				"label" : "Seed for random operations",
+				"description" : "If zero a 'random' seed is used",
+				"default" : 0,
+				"minimum" : 0
 			}
 		],
-		"strings": [
-			{
-				"index": 4,
-				"argument": "--codec.include_files",
-				"label": "Whitelist of characters",
-				"description": "Will be kept even if they do not occur in the GT, e.g. ABCDEFGHIJ...012345",
-				"default": "A-Za-z0-9"
-			},
-			{
-				"index": 12,
-				"argument": "--network",
-				"label": "The network structure",
-				"description": "deep3: cnn=40:3x3,pool=2x2,cnn=60:3x3,pool=2x2,cnn=120:3x3,lstm=200,lstm=200,lstm=200,dropout=0.5",
-				"default": "cnn=40:3x3,pool=2x2,cnn=60:3x3,pool=2x2,lstm=200,dropout=0.5"
+		"strings" : [{
+				"index" : 4,
+				"argument" : "--codec.include_files",
+				"label" : "Whitelist of characters",
+				"description" : "Will be kept even if they do not occur in the GT, e.g. ABCDEFGHIJ...012345",
+				"default" : "A-Za-z0-9"
+			}, {
+				"index" : 12,
+				"argument" : "--network",
+				"label" : "The network structure",
+				"description" : "deep3: cnn=40:3x3,pool=2x2,cnn=60:3x3,pool=2x2,cnn=120:3x3,lstm=200,lstm=200,lstm=200,dropout=0.5",
+				"default" : "cnn=40:3x3,pool=2x2,cnn=60:3x3,pool=2x2,lstm=200,dropout=0.5"
 			}
 		],
-		"weights": [
-			{
-				"index": 18,
-				"argument": "--weights",
-				"label": "Weights (optional)",
-				"minimum-version": "2.2.3",
-				"multiple-select": true,
-				"suffix": ".ckpt"
+		"weights" : [{
+				"index" : 18,
+				"argument" : "--weights",
+				"label" : "Weights (optional)",
+				"minimum-version" : "2.2.3",
+				"multiple-select" : true,
+				"suffix" : ".ckpt"
 			}
 		]
 	},
-	"mappings": [
-		{
-			"argument": "--codec.keep_loaded",
-			"values": [
+	"mappings" : [{
+			"argument" : "--codec.keep_loaded",
+			"values" : [
 				"--codec.keep_loaded",
 				"True"
 			]
-		},
-		{
-			"argument": "--train.preload",
-			"values": [
+		}, {
+			"argument" : "--train.preload",
+			"values" : [
 				"--train.preload",
 				"True"
 			]
-		},
-		{
-			"argument": "--data.skip_invalid",
-			"values": [
+		}, {
+			"argument" : "--data.skip_invalid",
+			"values" : [
 				"--data.skip_invalid",
 				"False"
 			]
 		}
 	],
-	"framework": {
-		"version": "2.2.3",
-		"argument": {
-			"images": "--train.images",
-			"output": "--best_models_dir",
-			"train": "--train",
-			"train-value": "PageXML"
+	"framework" : {
+		"version" : "2.2.3",
+		"argument" : {
+			"images" : "--train.images",
+			"output" : "--best_models_dir",
+			"train" : "--train",
+			"train-value" : "PageXML"
 		}
 	}
 }

@@ -25,6 +25,8 @@ import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.Batch
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.BatchArgument;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.core.ModelConfiguration;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
+import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.util.EvaluationUtils;
+import de.uniwuerzburg.zpd.ocr4all.application.communication.action.EvaluationMeasure;
 import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.job.ThreadPool;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SchedulerService;
 import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SystemProcessJob;
@@ -77,6 +79,11 @@ public class ProcessorService {
 	private final Path projectsFolder;
 
 	/**
+	 * The ocr4all temporary folder.
+	 */
+	private final Path temporaryFolder;
+
+	/**
 	 * True if discards the standard output.
 	 */
 	private final boolean isDiscardOutput;
@@ -117,6 +124,7 @@ public class ProcessorService {
 	 * @param dataFolder              The ocr4all data folder.
 	 * @param assembleFolder          The ocr4all assemble folder.
 	 * @param projectsFolder          The ocr4all projects folder.
+	 * @param temporaryFolder         The ocr4all temporary folder.
 	 * @param isDiscardOutput         True if discards the standard output.
 	 * @param isDiscardError          True if discards the standard error.
 	 * @param evaluationProcessor     The evaluation processor.
@@ -132,6 +140,7 @@ public class ProcessorService {
 	public ProcessorService(@Value("${ocr4all.data.folder}") String dataFolder,
 			@Value("${ocr4all.assemble.folder}") String assembleFolder,
 			@Value("${ocr4all.projects.folder}") String projectsFolder,
+			@Value("${ocr4all.temporary.folder}") String temporaryFolder,
 			@Value("${ocr4all.calamari.logging.discard.output}") boolean isDiscardOutput,
 			@Value("${ocr4all.calamari.logging.discard.error}") boolean isDiscardError,
 			@Value("${ocr4all.calamari.processors.evaluation.name}") String evaluationProcessor,
@@ -145,6 +154,7 @@ public class ProcessorService {
 		this.dataFolder = Paths.get(dataFolder).normalize();
 		this.assembleFolder = Paths.get(assembleFolder).normalize();
 		this.projectsFolder = Paths.get(projectsFolder).normalize();
+		this.temporaryFolder = Paths.get(temporaryFolder).normalize();
 
 		this.isDiscardOutput = isDiscardOutput;
 		this.isDiscardError = isDiscardError;
@@ -179,35 +189,43 @@ public class ProcessorService {
 	}
 
 	/**
-	 * Creates a job to perform the evaluation process and starts it on the
-	 * scheduler.
+	 * Returns the evaluation.
 	 * 
-	 * @param key        The job key.
-	 * @param arguments  The processor arguments.
-	 * @param collection The collection.
-	 * @return The scheduled job.
-	 * @throws IllegalArgumentException Throws on folder troubles.
+	 * @param arguments The arguments.
+	 * @return The evaluation measure.
 	 * @since 17
 	 */
-	public SystemProcessJob startEvaluation(String key, List<String> arguments, String collection)
-			throws IllegalArgumentException {
-		if (collection == null || collection.isBlank())
-			throw new IllegalArgumentException("the dataset parameter is not defined");
+	public EvaluationMeasure evaluate(String folder, List<String> arguments) {
+		try {
+			arguments.addAll(resourceService.getEvaluation().getFramework().getRequiredArguments());
 
-		Path path = Paths.get(dataFolder.toString(), collection.trim()).normalize();
+			Path path = temporaryFolder.resolve(folder);
 
-		if (!path.startsWith(dataFolder) || !Files.isDirectory(path))
-			throw new IllegalArgumentException("the data collection folder is not a valid directory");
+			logger.debug(
+					"start evaluation (directory " + path + "): " + processors.get(Type.evaluation) + " " + arguments);
 
-		// TODO: use path
+			SystemProcess process = new SystemProcess(path, processors.get(Type.evaluation));
 
-		SystemProcessJob job = new SystemProcessJob(
-				timeConsuming.contains(Type.evaluation) ? ThreadPool.timeConsuming : ThreadPool.standard, key,
-				new SystemProcess(path, processors.get(Type.evaluation)), isAddEnvironmentStandardOutput,
-				isDiscardOutput, isDiscardError, arguments);
-		schedulerService.start(job);
+			process.execute(arguments);
 
-		return job;
+			final String standardOutput = process.getStandardOutput();
+			final String standardError = process.getStandardError();
+
+			if (process.getExitValue() == 0)
+				return EvaluationUtils.parse(standardOutput, standardError);
+			else {
+				EvaluationMeasure evaluation = new EvaluationMeasure(EvaluationMeasure.State.interrupted,
+						"process exit code: " + process.getExitValue());
+
+				evaluation.setStandardOutput(standardOutput);
+				evaluation.setStandardError(standardError);
+
+				return evaluation;
+			}
+		} catch (Exception e) {
+			return new EvaluationMeasure(EvaluationMeasure.State.interrupted,
+					e.getClass().getName() + ": " + e.getMessage());
+		}
 	}
 
 	/**
@@ -235,6 +253,9 @@ public class ProcessorService {
 
 		// Adds the model arguments
 		addModelArguments(arguments, models);
+
+		logger.debug("scheduled recognition (directory " + path + "): " + processors.get(Type.recognition) + " "
+				+ arguments);
 
 		SystemProcessJob job = new SystemProcessJob(
 				timeConsuming.contains(Type.recognition) ? ThreadPool.timeConsuming : ThreadPool.standard, key,
@@ -331,6 +352,8 @@ public class ProcessorService {
 
 		// Adds the model arguments
 		addModelArguments(arguments, models);
+
+		logger.debug("scheduled training (directory " + path + "): " + processors.get(Type.training) + " " + arguments);
 
 		SystemProcessJob job = new SystemProcessJob(
 				timeConsuming.contains(Type.training) ? ThreadPool.timeConsuming : ThreadPool.standard, key,

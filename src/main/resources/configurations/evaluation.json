@@ -1,64 +1,88 @@
 {
-	"description": "Evaluates recognitions with Calamari",
-	"categories": [
+	"description" : "Evaluates recognitions with Calamari",
+	"categories" : [
 		"Recognition evaluation"
 	],
-	"steps": [
+	"steps" : [
 		"evaluation/recognition"
 	],
-	"model": {
-		"booleans": [
-			{
-				"index": 3,
-				"argument": "--skip_empty_gt",
-				"label": "Skip empty ground truth data",
-				"default": true
+	"model" : {
+		"booleans" : [{
+				"index" : 3,
+				"argument" : "--skip_empty_gt",
+				"label" : "Skip empty ground truth data",
+				"default" : false
 			}
 		],
-		"integers": [
-			{
-				"index": 1,
-				"argument": "--num_threads",
-				"label": "Number of parallel threads for program execution",
-				"default": 1,
-				"minimum": 1
-			},
-			{
-				"index": 2,
-				"argument": "--n_confusions",
-				"label": "Output this many top confusion",
-				"default": 10,
-				"step": 1,
-				"minimum": 1
+		"integers" : [{
+				"index" : 1,
+				"argument" : "--num_threads",
+				"label" : "Number of parallel threads for program execution",
+				"default" : 1,
+				"minimum" : 1
+			}, {
+				"index" : 2,
+				"argument" : "--n_confusions",
+				"label" : "Output this many top confusion (use -1 for all)",
+				"default" : -1,
+				"step" : 1,
+				"minimum" : -1
 			}
 		],
-		"selects": [
-			{
-				"index": 4,
-				"argument": "--non_existing_file_handling_mode",
-				"label": "Non existing file handling mode",
-				"multiple-options": false,
-				"items": [
-					{
-						"value": "skip",
-						"description": "Skip files",
-						"selected": false,
-						"disabled": false
-					},
-					{
-						"value": "empty",
-						"description": "Treat as empty files",
-						"selected": false,
-						"disabled": false
-					},
-					{
-						"value": "error",
-						"description": "Throw an error",
-						"selected": false,
-						"disabled": false
+		"selects" : [{
+				"index" : 4,
+				"argument" : "--non_existing_pred_handling_mode",
+				"label" : "Non existing file handling mode",
+				"multiple-options" : false,
+				"items" : [{
+						"value" : "skip",
+						"description" : "Skip files",
+						"selected" : false,
+						"disabled" : false
+					}, {
+						"value" : "empty",
+						"description" : "Treat as empty files",
+						"selected" : true,
+						"disabled" : false
+					}, {
+						"value" : "error",
+						"description" : "Throw an error",
+						"selected" : false,
+						"disabled" : false
 					}
 				]
 			}
+		]
+	},
+	"mappings" : [{
+			"argument" : "--skip_empty_gt",
+			"values" : [
+				"--skip_empty_gt",
+				"True"
+			]
+		}, {
+			"argument" : "--num_threads",
+			"values" : [
+				"--evaluator.setup.num_processes"
+			]
+		}
+	],
+	"framework" : {
+		"required-arguments" : [
+			"--gt",
+			"PageXML",
+			"--pred",
+			"PageXML",
+			"--gt.xml_files",
+			"*.xml",
+			"--gt.pred_extension",
+			".xml",
+			"--pred.xml_files",
+			"*.xml",
+			"--gt.text_index",
+			"0",
+			"--pred.text_index",
+			"1"
 		]
 	}
 }

@@ -21,9 +21,7 @@ import de.uniwuerzburg.zpd.ocr4all.application.calamari.communication.api.Evalua
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.ProcessorService;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.Configuration;
 import de.uniwuerzburg.zpd.ocr4all.application.calamari.msa.core.configuration.ResourceService;
-import de.uniwuerzburg.zpd.ocr4all.application.communication.msa.api.domain.JobResponse;
-import de.uniwuerzburg.zpd.ocr4all.application.msa.api.util.ApiUtils;
-import de.uniwuerzburg.zpd.ocr4all.application.msa.job.SystemProcessJob;
+import de.uniwuerzburg.zpd.ocr4all.application.communication.action.EvaluationMeasure;
 import jakarta.validation.Valid;
 
 /**
@@ -70,23 +68,19 @@ public class EvaluationController extends ProcessorApiController {
 	}
 
 	/**
-	 * Executes the process and returns the job in the response body.
+	 * Executes the process and returns the evaluation measure in the response body.
 	 * 
 	 * @param request The evaluation request.
-	 * @return The job in the response body.
+	 * @return The evaluation measure in the response body.
 	 * @since 1.8
 	 */
 	@PostMapping(executeRequestMapping)
-	public ResponseEntity<JobResponse> execute(@RequestBody @Valid EvaluationRequest request) {
+	public ResponseEntity<EvaluationMeasure> execute(@RequestBody @Valid EvaluationRequest request) {
 		try {
-			logger.debug("execute process: key " + request.getKey() + ", arguments '" + request.getArguments() + "'.");
+			logger.debug("execute process, arguments '" + request.getArguments() + "'.");
 
-			final SystemProcessJob job = service.startEvaluation(request.getKey(),
-					resourceService.mapEvaluationArguments(request.getArguments()), request.getCollection());
-
-			logger.debug("running job " + job.getId() + ", key " + job.getKey() + ".");
-
-			return ResponseEntity.ok().body(ApiUtils.getJobResponse(job));
+			return ResponseEntity.ok().body(service.evaluate(request.getFolder(),
+					resourceService.mapEvaluationArguments(request.getArguments())));
 		} catch (IllegalArgumentException ex) {
 			log(ex);
 

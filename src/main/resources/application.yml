@@ -35,6 +35,7 @@ ocr4all:
   data.folder: ${user.home}/ocr4all/data
   assemble.folder: ${user.home}/ocr4all/assemble
   projects.folder: ${user.home}/ocr4all/workspace/projects
+  temporary.folder: ${user.home}/ocr4all/tmp
   calamari:
     logging.discard:
       output: false
@@ -92,6 +93,7 @@ ocr4all:
   data.folder: /srv/ocr4all/data
   assemble.folder: /srv/ocr4all/assemble
   projects.folder: /srv/ocr4all/projects
+  temporary.folder: /srv/ocr4all/tmp
 
 ---
 spring:
@@ -104,3 +106,4 @@ ocr4all:
   data.folder: ${user.home}/ocr4all/dev/data
   assemble.folder: ${user.home}/ocr4all/dev/assemble
   projects.folder: ${user.home}/ocr4all/dev/workspace/projects
+  temporary.folder: ${user.home}/ocr4all/dev/tmp
