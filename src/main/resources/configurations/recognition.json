@@ -65,16 +65,10 @@
 				"step" : 0
 			}
 		],
-		"strings" : [{
-				"index" : 2,
-				"argument" : "--checkpoin",
-				"label" : "Line recognition models"
-			}
-		],
 		"weights" : [{
 				"index" : 11,
 				"argument" : "--checkpoint",
-				"label" : "Check points",
+				"label" : "Models",
 				"minimum-version" : "2.2.3",
 				"multiple-select" : true,
 				"suffix" : ".ckpt"
